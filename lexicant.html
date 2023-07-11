@@ -1,0 +1,52 @@
+<html>
+
+<head>
+</head>
+<body>
+    Lexicant game
+    </br>
+    <input autoFocus="true" maxLength=1 type="text" id="prepend">
+    <textarea id="letters"></textarea>
+    <input maxLength=1 type="text" id="append">
+    <div style="background:green"></div>
+</body>
+
+<script src="LetterBitMapTrie.js"></script>
+
+<script>
+    let prepend = document.getElementById("prepend")
+    let append = document.getElementById("append")
+    let letters = document.getElementById("letters")
+
+    let dictionary = []
+
+    async function getDictionary() {
+        response = await fetch("dictionary.json")
+        dictionary = await response.json()
+        return dictionary
+    }
+
+    getDictionary().then((value) => doMoreJavascript(value))
+
+    function doMoreJavascript(dict) {
+        dictionary = new Set(dict)
+        console.log("dictionary")
+        console.log(dictionary)
+        trie = new LetterBitMapTrie(dictionary)
+        console.log(trie)
+        this.trie = trie
+    }
+
+    function prependLetter(event) {
+      letters.innerHTML = event.target.value + letters.innerHTML
+      prepend.value = ""
+    }
+
+    function appendLetter(event) {
+      letters.innerHTML = letters.innerHTML + event.target.value
+      append.value = ""
+    }
+
+    prepend.oninput = prependLetter
+    append.oninput = appendLetter
+</script>
