@@ -8,6 +8,7 @@
     <input autoFocus="true" maxLength=1 type="text" id="prepend">
     <textarea id="letters"></textarea>
     <input maxLength=1 type="text" id="append">
+    <button id="button">Undo</button>
     <div style="background:green"></div>
 </body>
 
@@ -17,6 +18,7 @@
     let prepend = document.getElementById("prepend")
     let append = document.getElementById("append")
     let letters = document.getElementById("letters")
+    let button = document.getElementById("button")
 
     let dictionary = []
 
@@ -38,15 +40,40 @@
     }
 
     function prependLetter(event) {
-      letters.innerHTML = event.target.value + letters.innerHTML
+      updateLetters("front", event.target.value)
       prepend.value = ""
     }
 
     function appendLetter(event) {
-      letters.innerHTML = letters.innerHTML + event.target.value
+      updateLetters("end", event.target.value)
       append.value = ""
+    }
+
+    function undo() {
+      updateLetters("pop")
+    }
+
+    function updateLetters(mode, char = null) {
+      if (!letters.state) {
+        letters.state = []
+      }
+      if (mode === "end") {
+        letters.state.push([char, false]) 
+        letters.innerHTML = letters.innerHTML + char
+      } else if (mode === "front") {
+        letters.state.push([char, true]) 
+        letters.innerHTML = char + letters.innerHTML
+      } else if (mode === "pop") {
+        let arr = letters.state.pop()
+        if (arr[1]) {
+          letters.innerHTML = letters.innerHTML.substring(1)
+        } else {
+          letters.innerHTML = letters.innerHTML.substring(0, letters.innerHTML.length - 1)
+        }
+      }
     }
 
     prepend.oninput = prependLetter
     append.oninput = appendLetter
+    button.onclick = undo
 </script>
