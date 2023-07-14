@@ -6,10 +6,10 @@
     Lexicant game
     </br>
     <input autoFocus="true" maxLength=1 type="text" id="prepend">
-    <textarea id="letters"></textarea>
+    <span id="letters"></span>
     <input maxLength=1 type="text" id="append">
     <button id="button">Undo</button>
-    <div style="background:green"></div>
+    <div id="message"></div>
 </body>
 
 <script src="LetterBitMapTrie.js"></script>
@@ -18,7 +18,9 @@
     let prepend = document.getElementById("prepend")
     let append = document.getElementById("append")
     let letters = document.getElementById("letters")
+    letters.state = []
     let button = document.getElementById("button")
+    let message = document.getElementById("message")
 
     let dictionary = []
 
@@ -31,11 +33,8 @@
     getDictionary().then((value) => doMoreJavascript(value))
 
     function doMoreJavascript(dict) {
-        dictionary = new Set(dict)
-        console.log("dictionary")
-        console.log(dictionary)
+        dictionary = new Set(dict.filter(word => word.length > 3))
         trie = new LetterBitMapTrie(dictionary)
-        console.log(trie)
         this.trie = trie
     }
 
@@ -50,13 +49,11 @@
     }
 
     function undo() {
-      updateLetters("pop")
+      updateLettersState("pop")
+      updateLettersState("pop")
     }
-
-    function updateLetters(mode, char = null) {
-      if (!letters.state) {
-        letters.state = []
-      }
+    
+    function updateLettersState(mode, char = null) {
       if (mode === "end") {
         letters.state.push([char, false]) 
         letters.innerHTML = letters.innerHTML + char
@@ -71,6 +68,90 @@
           letters.innerHTML = letters.innerHTML.substring(0, letters.innerHTML.length - 1)
         }
       }
+    }
+
+    function updateLetters(mode, char = null) {
+      updateLettersState(mode, char)
+      word = letters.innerHTML
+      if (dictionary.has(word)) {
+         message.innerHTML = word + " is in the dictionary, you lost"
+         this.resetWord()
+      } else {
+        let apps = trie.append().get(word)
+        let preps = trie.prepend().get(word)
+        let winning_appends = apps.filter(
+          letter => trie.perfectPlay(word + letter) === 1)
+
+        let winning_prepends = apps.filter(
+          letter => trie.perfectPlay(letter + word) === 1)
+        //message.innerHTML = preps + "<br>" + apps + "<br>" + 
+        //  winning_appends + "<br>" + winning_prepends
+
+        let safe_appends = apps.filter(
+          letter => !dictionary.has(word + letter))
+        let safe_prepends = apps.filter(
+          letter => !dictionary.has(letter + word))
+
+        if (winning_appends.length !== 0 &&
+            (winning_prepends.length === 0 || Math.random() > .5)) {
+          let move = randomChoice(winning_appends)
+          computerAppend(move)
+          showHints()
+        } else if (winning_prepends.length !== 0) {
+          let move = randomChoice(winning_prepends)
+          computerPrepend(move)
+          showHints()
+        } else if (safe_appends.length !== 0 &&
+            (safe_prepends.length === 0 || Math.random() > .5)) {
+          let move = randomChoice(safe_appends)
+          computerAppend(move)
+          showHints()
+        } else {
+          message.innerHTML = word + ": computer gave up"
+          this.resetWord()
+        }
+      }
+    }
+
+    function computerPrepend(letter) {
+      updateLettersState("front", letter)
+    }
+
+    function computerAppend(letter) {
+      updateLettersState("end", letter)
+    }
+
+    function showHints() {
+      word = letters.innerHTML
+      let apps = trie.append().get(word)
+      let preps = trie.prepend().get(word)
+      let winning_appends = apps.filter(
+        letter => trie.perfectPlay(word + letter) === 1)
+
+      let winning_prepends = apps.filter(
+        letter => trie.perfectPlay(letter + word) === 1)
+      
+      let safe_appends = apps.filter(
+        letter => !dictionary.has(word + letter))
+      let safe_prepends = apps.filter(
+        letter => !dictionary.has(letter + word))
+
+      message.innerHTML =
+        "valid prepends: " + preps + "<br>" +
+        "valid appends: " + apps + "<br>" +
+        "winning prepends: " + winning_prepends + "<br>" +
+        "winning appends: " + winning_appends + "<br>" +
+        "safe prepends: " + safe_prepends + "<br>" +
+        "safe appends: " + safe_appends + "<br>"
+    }
+
+    function resetWord() {
+        this.letters.innerHTML = ""
+        this.letters.state = []
+    }
+
+    function randomChoice(list) {
+        return list[Math.floor(Math.random()*list.length)]
     }
 
     prepend.oninput = prependLetter
