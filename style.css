@@ -1,3 +1,33 @@
-body {
+* {
   font-family: "Inconsolata", monospace;
+  font-size: 18px;
+  margin: 0;
+}
+
+body,
+html,
+input[type="text"] {
+  background-color: midnightblue;
+  color: yellow;
+  padding: 12px;
+}
+
+input[type="text"] {
+  border: 2px solid yellow;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+
+  background-color: yellow;
+  color: midnightblue;
+  cursor: pointer;
+}
+
+h1 {
+  font-size: 24px;
 }
