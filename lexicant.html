@@ -36,7 +36,6 @@
     </div>
     <button id="undoButton">Undo</button>
     <button id="challengeButton">Challenge</button>
-    <div>Words played this session:<pre id="playedWords">[]</pre></div>
 
     <div id="main"></div>
 </body>
@@ -53,7 +52,7 @@ async function loadDictionary() {
   store.setDictionaryAndTrie(dictionary, trie);
 }
 
-function Hints() {
+function Hints({margin}) {
   const [isShown, setIsShown] = React.useState(() => !!(new URL(window.location).searchParams.get("hints")))
 
   const storeData = store.useStoreData();
@@ -67,7 +66,7 @@ function Hints() {
   const safe_prepends = preps.filter(letter => !store.isDictionaryWord(letter + storeData.letters))
 
   return (
-    <div>
+    <div style={margin ? {margin} : undefined}>
       <button onClick={() => setIsShown(prev => !prev)}>{isShown ? 'Hide' : 'Show'} Hints</button>
       {isShown && <React.Fragment>
         <div>valid prepends: {preps.join(", ")}</div>
@@ -79,6 +78,12 @@ function Hints() {
       </React.Fragment>}
     </div>
   )
+}
+
+function PlayedWords({margin}) {
+  const {playedWords} = store.useStoreData();
+
+  return <div style={margin ? {margin} : undefined}>Words played this session:<pre>{JSON.stringify(playedWords, null, 2)}</pre></div>
 }
 
 function App() {
@@ -96,8 +101,9 @@ function App() {
         {Array.from(letters).map((letter, index) => <div key={index} className="gameBoardLetter">{letter}</div>)}
         <input type="text" className="gameBoardLetter" value="" onChange={ev => {}} />
       </div>
-      <Hints />
+      <Hints margin="12px 0" />
       <div>Message: {message}</div>
+      <PlayedWords margin="12px 0" />
     </div>
   );
 }
@@ -116,16 +122,12 @@ window.addEventListener('load', main, {once: true})
 function oldMain() {
     const prepend = document.getElementById("prepend")
     const append = document.getElementById("append")
-    let letters = ""
     const lettersUI = document.getElementById("gameBoard")
-    let lettersState = []
     const undoButton = document.getElementById("undoButton")
-    const hintsButton = document.getElementById("hintsButton")
     const challengeButton = document.getElementById("challengeButton")
 
-
-    const playedWordsUI = document.getElementById("playedWords")
-    const playedWords = []
+    let letters = ""
+    let lettersState = []
     
     let url = new URL(window.location);
     if (url.searchParams.has('sequence')) {
@@ -234,14 +236,14 @@ function oldMain() {
           computerAppend(move)
           if (store.isDictionaryWord(word + move)) {
             store.setMessage(`Word is ${word + move}. Computer loses!`)
-            resetWord()
+            resetGame(word + move)
           }
         } else if (preps.length !== 0) {
           let move = randomChoice(preps)
           computerPrepend(move)
           if (store.isDictionaryWord(move + word)) {
             store.setMessage(`Word is ${move + word}. Computer loses!`)
-            resetWord()
+            resetGame(move + word)
           }
         } else {
           store.setMessage(word + ": computer challenges you! There's no valid continuation")
@@ -261,8 +263,7 @@ function oldMain() {
     }
 
     function resetGame(endingWord) {
-      playedWords.push(endingWord);
-      playedWordsUI.innerText = JSON.stringify(playedWords, null, 2)
+      store.addPlayedWord(endingWord);
 
       letters = ""
       lettersState = []
