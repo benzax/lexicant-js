@@ -1,252 +1,311 @@
 <html>
+  <head>
+    <title>Lexicant game</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700"
+    />
+    <link rel="stylesheet" href="/style.css" type="text/css" />
 
-<head>
-  <title>Lexicant game</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700">
-  <link rel="stylesheet" href="/style.css" type="text/css">
+    <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+    <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
+    <script>
+      async function hackilyImportModule(url) {
+        const response = await fetch(url);
+        const text = await response.text();
 
-  <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>   
-  <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
-  <script>
-    async function hackilyImportModule(url) {
-      const response = await fetch(url);
-      const text = await response.text();
+        const exports = {};
+        const module = {};
+        eval(text);
+        return exports.default;
+      }
 
-      const exports = {};
-      const module = {};
-      eval(text);
-      return exports.default;
-    }
-
-    let immutableUpdate = null;
-    async function loadModules() {
-      immutableUpdate = await hackilyImportModule('https://unpkg.com/immutability-helper@3.1.1/index.js');
-    }
-  </script>
-</head>
-<body>
-    </br>
+      let immutableUpdate = null;
+      async function loadModules() {
+        immutableUpdate = await hackilyImportModule(
+          "https://unpkg.com/immutability-helper@3.1.1/index.js"
+        );
+      }
+    </script>
+  </head>
+  <body>
     <div id="main">Loading code...</div>
-</body>
+  </body>
 
-<script src="/LetterBitMapTrie.js"></script>
-<script src="/Store.js"></script>
+  <script src="/LetterBitMapTrie.js"></script>
+  <script src="/Store.js"></script>
 
-<script type="text/babel">
-async function loadDictionary() {
-  const response = await fetch("/dictionary.json");
-  const dictionaryWordList = await response.json();
-  const dictionary = new Set(dictionaryWordList.filter(word => word.length > 3));
-  const trie = new LetterBitMapTrie(dictionary);
-  store.setDictionaryAndTrie(dictionary, trie);
-}
+  <script type="text/babel">
+    async function loadDictionary() {
+      const response = await fetch("/dictionary.json");
+      const dictionaryWordList = await response.json();
+      const dictionary = new Set(
+        dictionaryWordList.filter((word) => word.length > 3)
+      );
+      const trie = new LetterBitMapTrie(dictionary);
+      store.setDictionaryAndTrie(dictionary, trie);
+    }
 
+    function Hints({ margin }) {
+      const [isShown, setIsShown] = React.useState(
+        () => !!new URL(window.location).searchParams.get("hints")
+      );
 
-function Hints({margin}) {
-  const [isShown, setIsShown] = React.useState(() => !!(new URL(window.location).searchParams.get("hints")))
+      const storeData = store.useStoreData();
+      const { trie } = storeData;
 
-  const storeData = store.useStoreData();
-  const {trie} = storeData;
+      const apps = trie.append().get(storeData.letters);
+      const preps = trie.prepend().get(storeData.letters);
+      const winning_appends = apps.filter(
+        (letter) => trie.perfectPlay(storeData.letters + letter) === 1
+      );
+      const winning_prepends = preps.filter(
+        (letter) => trie.perfectPlay(letter + storeData.letters) === 1
+      );
+      const safe_appends = apps.filter(
+        (letter) => !store.isDictionaryWord(storeData.letters + letter)
+      );
+      const safe_prepends = preps.filter(
+        (letter) => !store.isDictionaryWord(letter + storeData.letters)
+      );
 
-  const apps = trie.append().get(storeData.letters)
-  const preps = trie.prepend().get(storeData.letters)
-  const winning_appends = apps.filter(letter => trie.perfectPlay(storeData.letters + letter) === 1)
-  const winning_prepends = preps.filter(letter => trie.perfectPlay(letter + storeData.letters) === 1)
-  const safe_appends = apps.filter(letter => !store.isDictionaryWord(storeData.letters + letter))
-  const safe_prepends = preps.filter(letter => !store.isDictionaryWord(letter + storeData.letters))
+      return (
+        <div style={margin ? { margin } : undefined}>
+          <button onClick={() => setIsShown((prev) => !prev)}>
+            {isShown ? "Hide" : "Show"} Hints
+          </button>
+          {isShown && (
+            <React.Fragment>
+              <div>valid prepends: {preps.join(", ")}</div>
+              <div>valid appends: {apps.join(", ")}</div>
+              <div>winning prepends: {winning_prepends.join(", ")}</div>
+              <div>winning appends: {winning_appends.join(", ")}</div>
+              <div>safe prepends: {safe_prepends.join(", ")}</div>
+              <div>safe appends: {safe_appends.join(", ")}</div>
+            </React.Fragment>
+          )}
+        </div>
+      );
+    }
 
-  return (
-    <div style={margin ? {margin} : undefined}>
-      <button onClick={() => setIsShown(prev => !prev)}>{isShown ? 'Hide' : 'Show'} Hints</button>
-      {isShown && <React.Fragment>
-        <div>valid prepends: {preps.join(", ")}</div>
-        <div>valid appends: {apps.join(", ")}</div>
-        <div>winning prepends: {winning_prepends.join(", ")}</div>
-        <div>winning appends: {winning_appends.join(", ")}</div>
-        <div>safe prepends: {safe_prepends.join(", ")}</div>
-        <div>safe appends: {safe_appends.join(", ")}</div>
-      </React.Fragment>}
-    </div>
-  )
-}
+    function PlayedWords({ margin }) {
+      const { playedWords } = store.useStoreData();
 
-function PlayedWords({margin}) {
-  const {playedWords} = store.useStoreData();
+      return (
+        <div style={margin ? { margin } : undefined}>
+          Words played this session:
+          <pre>{JSON.stringify(playedWords, null, 2)}</pre>
+        </div>
+      );
+    }
 
-  return <div style={margin ? {margin} : undefined}>Words played this session:<pre>{JSON.stringify(playedWords, null, 2)}</pre></div>
-}
+    function App() {
+      const { isInitialized, letters, message } = store.useStoreData();
 
-function App() {
-  const {isInitialized, letters, message} = store.useStoreData();
+      if (!isInitialized) {
+        return <div>Loading dictionary...</div>;
+      }
 
-  if (!isInitialized) {
-    return <div>Loading dictionary...</div>;
-  }
+      return (
+        <div>
+          <h1>Lexicant game</h1>
+          <div className="gameBoard">
+            <input
+              id="prepend"
+              type="text"
+              maxLength={1}
+              className="gameBoardLetter"
+              value=""
+              onChange={(ev) => updateLetters("front", event.target.value)}
+              autoFocus
+            />
+            {Array.from(letters).map((letter, index) => (
+              <div key={index} className="gameBoardLetter">
+                {letter}
+              </div>
+            ))}
+            <input
+              id="append"
+              type="text"
+              maxLength={1}
+              className="gameBoardLetter"
+              value=""
+              onChange={(ev) => updateLetters("end", event.target.value)}
+            />
+          </div>
+          <button onClick={undo} style={{ marginRight: 12 }}>
+            Undo
+          </button>
+          <button onClick={respondToChallenge}>Challenge</button>
+          <Hints margin="12px 0" />
+          <div>Message: {message}</div>
+          <PlayedWords margin="12px 0" />
+        </div>
+      );
+    }
 
-  return (
-    <div>
-      <h1>Lexicant game</h1>
-      <div className="gameBoard">
-        <input id="prepend" type="text" maxLength={1} className="gameBoardLetter" value="" onChange={ev => updateLetters("front", event.target.value)} autoFocus/>
-        {Array.from(letters).map((letter, index) => <div key={index} className="gameBoardLetter">{letter}</div>)}
-        <input id="append" type="text" maxLength={1} className="gameBoardLetter" value="" onChange={ev => updateLetters("end", event.target.value)} />
-      </div>
-      <button onClick={undo} style={{marginRight: 12}}>Undo</button>
-      <button onClick={respondToChallenge}>Challenge</button>
-      <Hints margin="12px 0" />
-      <div>Message: {message}</div>
-      <PlayedWords margin="12px 0" />
-    </div>
-  );
-}
+    async function main() {
+      await loadModules();
+      await loadDictionary();
 
-async function main() {
-  await loadModules();
-  await loadDictionary();
+      ReactDOM.createRoot(document.getElementById("main")).render(<App />);
+    }
 
-  ReactDOM.createRoot(document.getElementById('main')).render(<App />)
-}
-
-    const prepend = document.getElementById("prepend")
-    const append = document.getElementById("append")
+    const prepend = document.getElementById("prepend");
+    const append = document.getElementById("append");
 
     function updateSequenceInUrl() {
       const url = new URL(window.location);
-      url.searchParams.set("sequence", store.getLetters())
-      history.pushState({}, "", url)
+      url.searchParams.set("sequence", store.getLetters());
+      history.pushState({}, "", url);
     }
 
     function undo() {
-      updateLettersState("pop")
-      updateLettersState("pop")
+      updateLettersState("pop");
+      updateLettersState("pop");
       updateSequenceInUrl();
     }
-    
+
     function updateLettersState(mode, char = null) {
       if (mode === "end") {
-        store.setLettersState([...store.getLettersState(), [char, false]])
-        store.setLetters(store.getLetters() + char)
+        store.setLettersState([...store.getLettersState(), [char, false]]);
+        store.setLetters(store.getLetters() + char);
       } else if (mode === "front") {
-        store.setLettersState([...store.getLettersState(), [char, true]])
-        store.setLetters(char + store.getLetters())
+        store.setLettersState([...store.getLettersState(), [char, true]]);
+        store.setLetters(char + store.getLetters());
       } else if (mode === "pop") {
-        const arr = store.getLettersState().at(-1)
-        store.setLettersState(store.getLettersState().slice(0, -1))
+        const arr = store.getLettersState().at(-1);
+        store.setLettersState(store.getLettersState().slice(0, -1));
         if (arr[1]) {
-          store.setLetters(store.getLetters().slice(1))
+          store.setLetters(store.getLetters().slice(1));
         } else {
-          store.setLetters(store.getLetters().slice(0, -1))
+          store.setLetters(store.getLetters().slice(0, -1));
         }
       }
     }
 
     function updateLetters(mode, char = null) {
-      store.setMessage("")
+      store.setMessage("");
       if (char !== null && !char.match(/[a-z]/i)) {
         if (char === " ") {
           if (document.activeElement === prepend) {
-            append.focus()
+            append.focus();
           } else {
-            prepend.focus()
+            prepend.focus();
           }
         }
-        return
+        return;
       }
-      char = char.toLowerCase()
-      updateLettersState(mode, char)
+      char = char.toLowerCase();
+      updateLettersState(mode, char);
       // TODO: consider renaming to "letters"
-      const word = store.getLetters()
+      const word = store.getLetters();
       if (store.isDictionaryWord(word)) {
-         store.setMessage(word + " is in the dictionary, you lost")
-         resetGame(word)
+        store.setMessage(word + " is in the dictionary, you lost");
+        resetGame(word);
       } else {
-        let apps = store.getTrie().append().get(word)
-        let preps = store.getTrie().prepend().get(word)
+        let apps = store.getTrie().append().get(word);
+        let preps = store.getTrie().prepend().get(word);
         let winning_appends = apps.filter(
-          letter => store.getTrie().perfectPlay(word + letter) === 1)
+          (letter) => store.getTrie().perfectPlay(word + letter) === 1
+        );
 
         let winning_prepends = preps.filter(
-          letter => store.getTrie().perfectPlay(letter + word) === 1)
-        //store.setMessage(preps + "<br>" + apps + "<br>" + 
+          (letter) => store.getTrie().perfectPlay(letter + word) === 1
+        );
+        //store.setMessage(preps + "<br>" + apps + "<br>" +
         //  winning_appends + "<br>" + winning_prepends)
 
         let safe_appends = apps.filter(
-          letter => !store.isDictionaryWord(word + letter))
+          (letter) => !store.isDictionaryWord(word + letter)
+        );
         let safe_prepends = preps.filter(
-          letter => !store.isDictionaryWord(letter + word))
+          (letter) => !store.isDictionaryWord(letter + word)
+        );
 
-        if (winning_appends.length !== 0 &&
-            (winning_prepends.length === 0 || Math.random() > .5)) {
-          let move = randomChoice(winning_appends)
-          computerAppend(move)
+        if (
+          winning_appends.length !== 0 &&
+          (winning_prepends.length === 0 || Math.random() > 0.5)
+        ) {
+          let move = randomChoice(winning_appends);
+          computerAppend(move);
         } else if (winning_prepends.length !== 0) {
-          let move = randomChoice(winning_prepends)
-          computerPrepend(move)
-        } else if (safe_appends.length !== 0 &&
-            (safe_prepends.length === 0 || Math.random() > .5)) {
-          let move = randomChoice(safe_appends)
-          computerAppend(move)
+          let move = randomChoice(winning_prepends);
+          computerPrepend(move);
+        } else if (
+          safe_appends.length !== 0 &&
+          (safe_prepends.length === 0 || Math.random() > 0.5)
+        ) {
+          let move = randomChoice(safe_appends);
+          computerAppend(move);
         } else if (safe_prepends.length !== 0) {
-          let move = randomChoice(safe_prepends)
-          computerPrepend(move)
-        } else if (apps.length !== 0 &&
-          (preps.length === 0 || Math.random() > .5)) {
-          let move = randomChoice(apps)
-          computerAppend(move)
+          let move = randomChoice(safe_prepends);
+          computerPrepend(move);
+        } else if (
+          apps.length !== 0 &&
+          (preps.length === 0 || Math.random() > 0.5)
+        ) {
+          let move = randomChoice(apps);
+          computerAppend(move);
           if (store.isDictionaryWord(word + move)) {
-            store.setMessage(`Word is ${word + move}. Computer loses!`)
-            resetGame(word + move)
+            store.setMessage(`Word is ${word + move}. Computer loses!`);
+            resetGame(word + move);
           }
         } else if (preps.length !== 0) {
-          let move = randomChoice(preps)
-          computerPrepend(move)
+          let move = randomChoice(preps);
+          computerPrepend(move);
           if (store.isDictionaryWord(move + word)) {
-            store.setMessage(`Word is ${move + word}. Computer loses!`)
-            resetGame(move + word)
+            store.setMessage(`Word is ${move + word}. Computer loses!`);
+            resetGame(move + word);
           }
         } else {
-          store.setMessage(word + ": computer challenges you! There's no valid continuation")
-          resetGame(word)
+          store.setMessage(
+            word + ": computer challenges you! There's no valid continuation"
+          );
+          resetGame(word);
         }
       }
-      updateSequenceInUrl()
+      updateSequenceInUrl();
     }
 
     function computerPrepend(letter) {
-      updateLettersState("front", letter)
+      updateLettersState("front", letter);
     }
 
     function computerAppend(letter) {
-      updateLettersState("end", letter)
+      updateLettersState("end", letter);
     }
 
     function resetGame(endingWord) {
       store.addPlayedWord(endingWord);
-      store.resetGame()
+      store.resetGame();
     }
 
     function respondToChallenge() {
       while (!dictionary.has(store.getLetters())) {
-        const apps = trie.append().get(store.getLetters())
-        const preps = trie.prepend().get(store.getLetters())
-        const index = Math.floor(Math.random() * (apps.length + preps.length))
+        const apps = trie.append().get(store.getLetters());
+        const preps = trie.prepend().get(store.getLetters());
+        const index = Math.floor(Math.random() * (apps.length + preps.length));
         if (index < apps.length) {
-          computerAppend(apps[index])
+          computerAppend(apps[index]);
         } else {
-          computerPrepend(preps[index - apps.length])
+          computerPrepend(preps[index - apps.length]);
         }
       }
-      store.setMessage(`I was thinking of \"${store.getLetters()}\"!`)
-      resetGame(store.getLetters())
+      store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
+      resetGame(store.getLetters());
     }
 
-function randomChoice(list) {
-  return list[Math.floor(Math.random()*list.length)]
-}
+    function randomChoice(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
 
-window.addEventListener('load', main, {once: true})
-
-</script>
+    window.addEventListener("load", main, { once: true });
+  </script>
+</html>
