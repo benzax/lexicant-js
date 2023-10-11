@@ -126,13 +126,12 @@ function oldMain() {
     const undoButton = document.getElementById("undoButton")
     const challengeButton = document.getElementById("challengeButton")
 
-    let letters = ""
     let lettersState = []
     
     let url = new URL(window.location);
     if (url.searchParams.has('sequence')) {
       lettersState = url.searchParams.get('sequence').split('').map((x) => [x, false])
-      letters = url.searchParams.get('sequence')
+      store.setLetters(url.searchParams.get('sequence'))
       refreshLettersUI()
     }
 
@@ -149,13 +148,12 @@ function oldMain() {
     function undo() {
       updateLettersState("pop")
       updateLettersState("pop")
-      url.searchParams.set("sequence", letters)
+      url.searchParams.set("sequence", store.getLetters())
       history.pushState({}, "", url)
     }
 
     function refreshLettersUI() {
-      store.setLetters(letters);
-      lettersUI.innerHTML = Array.from(letters).map(letter => `<div class="gameBoardLetter">${letter}</div>`).join("")
+      lettersUI.innerHTML = Array.from(store.getLetters()).map(letter => `<div class="gameBoardLetter">${letter}</div>`).join("")
       lettersUI.prepend(prepend)
       lettersUI.append(append)
       prepend.value = ""
@@ -164,17 +162,17 @@ function oldMain() {
     
     function updateLettersState(mode, char = null) {
       if (mode === "end") {
-        lettersState.push([char, false]) 
-        letters += char
+        lettersState.push([char, false])
+        store.setLetters(store.getLetters() + char)
       } else if (mode === "front") {
         lettersState.push([char, true]) 
-        letters = char + letters
+        store.setLetters(char + store.getLetters())
       } else if (mode === "pop") {
         let arr = lettersState.pop()
         if (arr[1]) {
-          letters = letters.substring(1)
+          store.setLetters(store.getLetters().slice(1))
         } else {
-          letters = letters.substring(0, letters.length - 1)
+          store.setLetters(store.getLetters().slice(0, -1))
         }
       }
 
@@ -195,8 +193,8 @@ function oldMain() {
       }
       char = char.toLowerCase()
       updateLettersState(mode, char)
-      // TODO: just use the letters variable instead of word
-      const word = letters
+      // TODO: consider renaming to "letters"
+      const word = store.getLetters()
       if (store.isDictionaryWord(word)) {
          store.setMessage(word + " is in the dictionary, you lost")
          resetGame(word)
@@ -250,7 +248,7 @@ function oldMain() {
           resetGame(word)
         }
       }
-      url.searchParams.set("sequence", letters)
+      url.searchParams.set("sequence", store.getLetters())
       history.pushState({}, "", url)
     }
 
@@ -265,24 +263,24 @@ function oldMain() {
     function resetGame(endingWord) {
       store.addPlayedWord(endingWord);
 
-      letters = ""
+      store.setLetters("")
       lettersState = []
       refreshLettersUI()
     }
 
     function respondToChallenge() {
-      while (!dictionary.has(letters)) {
-        let apps = trie.append().get(letters)
-        let preps = trie.prepend().get(letters)
-        let index = Math.floor(Math.random() * (apps.length + preps.length))
+      while (!dictionary.has(store.getLetters())) {
+        const apps = trie.append().get(store.getLetters())
+        const preps = trie.prepend().get(store.getLetters())
+        const index = Math.floor(Math.random() * (apps.length + preps.length))
         if (index < apps.length) {
           computerAppend(apps[index])
         } else {
           computerPrepend(preps[index - apps.length])
         }
       }
-      message.innerHTML = `I was thinking of \"${letters}\"!`
-      resetGame(letters)
+      store.setMessage(`I was thinking of \"${store.getLetters()}\"!`)
+      resetGame(store.getLetters())
     }
 
     prepend.oninput = prependLetter
