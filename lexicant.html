@@ -110,8 +110,17 @@
           let move = randomChoice(safe_prepends)
           computerPrepend(move)
           showHints()
+        } else if (apps.length !== 0 &&
+          (preps.length === 0 || Math.random() > .5)) {
+            let move = randomChoice(apps)
+            computerAppend(move)
+            showHints()
+        } else if (preps.length !== 0) {
+          let move = randomChoice(preps)
+          computerPrepend(move)
+          showHints()
         } else {
-          message.innerHTML = word + ": computer gave up"
+          message.innerHTML = word + ": computer challenges you! There's no valid continuation"
           this.resetWord()
         }
       }
