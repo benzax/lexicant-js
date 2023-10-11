@@ -118,15 +118,19 @@
           let move = randomChoice(apps)
           computerAppend(move)
           if (dictionary.has(word + move)) {
+            message.innerHTML = `Word is ${word + move}. Computer loses!`
+            this.resetWord()
+          } else {
             showHints()
-            message.innerHTML = "computer loses!"
           }
         } else if (preps.length !== 0) {
           let move = randomChoice(preps)
           computerPrepend(move)
           if (dictionary.has(move + word)) {
+            message.innerHTML = `Word is ${move + word}. Computer loses!`
+            this.resetWord()
+          } else {
             showHints()
-            message.innerHTML = "computer loses!"
           }
         } else {
           message.innerHTML = word + ": computer challenges you! There's no valid continuation"
