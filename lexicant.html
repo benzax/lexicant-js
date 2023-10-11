@@ -1,6 +1,9 @@
 <html>
 
 <head>
+  <title>Lexicant game</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inconsolata&display=swap">
+  <link rel="stylesheet" href="/style.css" type="text/css">
 </head>
 <body>
     Lexicant game
@@ -12,7 +15,7 @@
     <div id="message"></div>
 </body>
 
-<script src="LetterBitMapTrie.js"></script>
+<script src="/LetterBitMapTrie.js"></script>
 
 <script>
     let prepend = document.getElementById("prepend")
@@ -25,7 +28,7 @@
     let dictionary = []
 
     async function getDictionary() {
-        response = await fetch("dictionary.json")
+        response = await fetch("/dictionary.json")
         dictionary = await response.json()
         return dictionary
     }
