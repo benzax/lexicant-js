@@ -89,7 +89,7 @@
 
         let safe_appends = apps.filter(
           letter => !dictionary.has(word + letter))
-        let safe_prepends = apps.filter(
+        let safe_prepends = preps.filter(
           letter => !dictionary.has(letter + word))
 
         if (winning_appends.length !== 0 &&
@@ -105,6 +105,10 @@
             (safe_prepends.length === 0 || Math.random() > .5)) {
           let move = randomChoice(safe_appends)
           computerAppend(move)
+          showHints()
+        } else if (safe_prepends.length !== 0) {
+          let move = randomChoice(safe_prepends)
+          computerPrepend(move)
           showHints()
         } else {
           message.innerHTML = word + ": computer gave up"
@@ -128,7 +132,7 @@
       let winning_appends = apps.filter(
         letter => trie.perfectPlay(word + letter) === 1)
 
-      let winning_prepends = apps.filter(
+      let winning_prepends = preps.filter(
         letter => trie.perfectPlay(letter + word) === 1)
       
       let safe_appends = apps.filter(
