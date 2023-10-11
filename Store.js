@@ -7,6 +7,8 @@ const store = (() => {
     dictionary: null,
     trie: null,
 
+    letters: "",
+
     message: "",
   });
 
@@ -24,6 +26,12 @@ const store = (() => {
     setMessage(newMessage) {
       subject.next(
         immutableUpdate(getSnapshot(), { message: { $set: newMessage } })
+      );
+    },
+
+    setLetters(newLetters) {
+      subject.next(
+        immutableUpdate(getSnapshot(), { letters: { $set: newLetters } })
       );
     },
 

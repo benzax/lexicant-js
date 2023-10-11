@@ -27,7 +27,7 @@ h1 {
   font-size: 24px;
 }
 
-#gameBoard {
+.gameBoard {
   display: flex;
   flex-direction: row;
   align-items: center;
