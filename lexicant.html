@@ -87,6 +87,17 @@
     }
 
     function updateLetters(mode, char = null) {
+      if (char !== null && !char.match(/[a-z]/i)) {
+        if (char === " ") {
+          if (document.activeElement === prepend) {
+            append.focus()
+          } else {
+            prepend.focus()
+          }
+        }
+        return
+      }
+      char = char.toLowerCase()
       updateLettersState(mode, char)
       word = letters.innerHTML
       if (dictionary.has(word)) {
