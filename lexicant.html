@@ -235,7 +235,18 @@
     }
 
     function respondToChallenge() {
-      // TODO
+      while (!dictionary.has(letters)) {
+        let apps = trie.append().get(letters)
+        let preps = trie.prepend().get(letters)
+        let index = Math.floor(Math.random() * (apps.length + preps.length))
+        if (index < apps.length) {
+          computerAppend(apps[index])
+        } else {
+          computerPrepend(preps[index - apps.length])
+        }
+      }
+      message.innerHTML = `I was thinking of \"${letters}\"!`
+      resetGame(letters)
     }
 
     function randomChoice(list) {
