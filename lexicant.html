@@ -9,6 +9,23 @@
   <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>   
+  <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
+  <script>
+    async function hackilyImportModule(url) {
+      const response = await fetch(url);
+      const text = await response.text();
+
+      const exports = {};
+      const module = {};
+      eval(text);
+      return exports.default;
+    }
+
+    let immutableUpdate = null;
+    async function loadModules() {
+      immutableUpdate = await hackilyImportModule('https://unpkg.com/immutability-helper@3.1.1/index.js');
+    }
+  </script>
 </head>
 <body>
     <h1>Lexicant game</h1>
@@ -22,11 +39,30 @@
     <button id="challengeButton">Challenge</button>
     <div id="message"></div>
     <div>Words played this session:<pre id="playedWords">[]</pre></div>
+
+    <div id="main"></div>
 </body>
 
 <script src="/LetterBitMapTrie.js"></script>
+<script src="/Store.js"></script>
 
 <script type="text/babel">
+
+
+function App() {
+  const {message} = store.useStoreData();
+
+  return <div><h1>Lexicant game</h1><div>Message: {message}</div></div>
+}
+
+async function main() {
+  await loadModules();
+
+  ReactDOM.createRoot(document.getElementById('main')).render(<App />)
+}
+
+window.addEventListener('load', main, {once: true})
+
     const prepend = document.getElementById("prepend")
     const append = document.getElementById("append")
     let letters = ""
@@ -35,7 +71,6 @@
     const undoButton = document.getElementById("undoButton")
     const hintsButton = document.getElementById("hintsButton")
     const challengeButton = document.getElementById("challengeButton")
-    const message = document.getElementById("message")
 
     let dictionary = new Set()
     let trie = null
@@ -125,7 +160,7 @@
       // TODO: just use the letters variable instead of word
       const word = letters
       if (dictionary.has(word)) {
-         message.innerHTML = word + " is in the dictionary, you lost"
+         setMessage(word + " is in the dictionary, you lost")
          resetGame(word)
       } else {
         let apps = trie.append().get(word)
@@ -135,8 +170,8 @@
 
         let winning_prepends = preps.filter(
           letter => trie.perfectPlay(letter + word) === 1)
-        //message.innerHTML = preps + "<br>" + apps + "<br>" + 
-        //  winning_appends + "<br>" + winning_prepends
+        //setMessage(preps + "<br>" + apps + "<br>" + 
+        //  winning_appends + "<br>" + winning_prepends)
 
         let safe_appends = apps.filter(
           letter => !dictionary.has(word + letter))
@@ -166,7 +201,7 @@
           let move = randomChoice(apps)
           computerAppend(move)
           if (dictionary.has(word + move)) {
-            message.innerHTML = `Word is ${word + move}. Computer loses!`
+            setMessage(`Word is ${word + move}. Computer loses!`)
             resetWord()
           } else {
             showHints()
@@ -175,13 +210,13 @@
           let move = randomChoice(preps)
           computerPrepend(move)
           if (dictionary.has(move + word)) {
-            message.innerHTML = `Word is ${move + word}. Computer loses!`
+            setMessage(`Word is ${move + word}. Computer loses!`)
             resetWord()
           } else {
             showHints()
           }
         } else {
-          message.innerHTML = word + ": computer challenges you! There's no valid continuation"
+          setMessage(word + ": computer challenges you! There's no valid continuation")
           resetGame(word)
         }
       }
@@ -216,13 +251,14 @@
       let safe_prepends = preps.filter(
         letter => !dictionary.has(letter + word))
 
-      message.innerHTML =
+      setMessage(
         "valid prepends: " + preps + "<br>" +
         "valid appends: " + apps + "<br>" +
         "winning prepends: " + winning_prepends + "<br>" +
         "winning appends: " + winning_appends + "<br>" +
         "safe prepends: " + safe_prepends + "<br>" +
         "safe appends: " + safe_appends + "<br>"
+      )
     }
 
     function resetGame(endingWord) {
@@ -251,6 +287,11 @@
 
     function randomChoice(list) {
         return list[Math.floor(Math.random()*list.length)]
+    }
+
+    function setMessage(message) {
+      store.setMessage(message);
+      document.getElementById("message").innerHTML = message;
     }
 
     prepend.oninput = prependLetter
