@@ -28,16 +28,8 @@
   </script>
 </head>
 <body>
-    <h1>Lexicant game</h1>
     </br>
-    <div id="gameBoard" class="gameBoard">
-      <input autoFocus="true" maxLength=1 type="text" id="prepend" class="gameBoardLetter">
-      <input maxLength=1 type="text" id="append" class="gameBoardLetter">
-    </div>
-    <button id="undoButton">Undo</button>
-    <button id="challengeButton">Challenge</button>
-
-    <div id="main"></div>
+    <div id="main">Loading code...</div>
 </body>
 
 <script src="/LetterBitMapTrie.js"></script>
@@ -51,6 +43,7 @@ async function loadDictionary() {
   const trie = new LetterBitMapTrie(dictionary);
   store.setDictionaryAndTrie(dictionary, trie);
 }
+
 
 function Hints({margin}) {
   const [isShown, setIsShown] = React.useState(() => !!(new URL(window.location).searchParams.get("hints")))
@@ -97,10 +90,12 @@ function App() {
     <div>
       <h1>Lexicant game</h1>
       <div className="gameBoard">
-        <input type="text" className="gameBoardLetter" value="" onChange={ev => {}} />
+        <input id="prepend" type="text" maxLength={1} className="gameBoardLetter" value="" onChange={ev => updateLetters("front", event.target.value)} autoFocus/>
         {Array.from(letters).map((letter, index) => <div key={index} className="gameBoardLetter">{letter}</div>)}
-        <input type="text" className="gameBoardLetter" value="" onChange={ev => {}} />
+        <input id="append" type="text" maxLength={1} className="gameBoardLetter" value="" onChange={ev => updateLetters("end", event.target.value)} />
       </div>
+      <button onClick={undo} style={{marginRight: 12}}>Undo</button>
+      <button onClick={respondToChallenge}>Challenge</button>
       <Hints margin="12px 0" />
       <div>Message: {message}</div>
       <PlayedWords margin="12px 0" />
@@ -113,43 +108,21 @@ async function main() {
   await loadDictionary();
 
   ReactDOM.createRoot(document.getElementById('main')).render(<App />)
+}
 
     const prepend = document.getElementById("prepend")
     const append = document.getElementById("append")
-    const lettersUI = document.getElementById("gameBoard")
-    const undoButton = document.getElementById("undoButton")
-    const challengeButton = document.getElementById("challengeButton")
-    
-    let url = new URL(window.location);
-    if (url.searchParams.has('sequence')) {
-      store.setLettersState(url.searchParams.get('sequence').split('').map((x) => [x, false]))
-      store.setLetters(url.searchParams.get('sequence'))
-      refreshLettersUI()
-    }
 
-    function prependLetter(event) {
-      updateLetters("front", event.target.value)
-      prepend.value = ""
-    }
-
-    function appendLetter(event) {
-      updateLetters("end", event.target.value)
-      append.value = ""
+    function updateSequenceInUrl() {
+      const url = new URL(window.location);
+      url.searchParams.set("sequence", store.getLetters())
+      history.pushState({}, "", url)
     }
 
     function undo() {
       updateLettersState("pop")
       updateLettersState("pop")
-      url.searchParams.set("sequence", store.getLetters())
-      history.pushState({}, "", url)
-    }
-
-    function refreshLettersUI() {
-      lettersUI.innerHTML = Array.from(store.getLetters()).map(letter => `<div class="gameBoardLetter">${letter}</div>`).join("")
-      lettersUI.prepend(prepend)
-      lettersUI.append(append)
-      prepend.value = ""
-      append.value = ""
+      updateSequenceInUrl();
     }
     
     function updateLettersState(mode, char = null) {
@@ -168,8 +141,6 @@ async function main() {
           store.setLetters(store.getLetters().slice(0, -1))
         }
       }
-
-      refreshLettersUI();
     }
 
     function updateLetters(mode, char = null) {
@@ -241,8 +212,7 @@ async function main() {
           resetGame(word)
         }
       }
-      url.searchParams.set("sequence", store.getLetters())
-      history.pushState({}, "", url)
+      updateSequenceInUrl()
     }
 
     function computerPrepend(letter) {
@@ -255,9 +225,7 @@ async function main() {
 
     function resetGame(endingWord) {
       store.addPlayedWord(endingWord);
-
       store.resetGame()
-      refreshLettersUI()
     }
 
     function respondToChallenge() {
@@ -274,12 +242,6 @@ async function main() {
       store.setMessage(`I was thinking of \"${store.getLetters()}\"!`)
       resetGame(store.getLetters())
     }
-
-    prepend.oninput = prependLetter
-    append.oninput = appendLetter
-    undoButton.onclick = undo
-    challengeButton.onclick = respondToChallenge
-  }
 
 function randomChoice(list) {
   return list[Math.floor(Math.random()*list.length)]

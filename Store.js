@@ -1,14 +1,22 @@
 const { BehaviorSubject } = rxjs;
 const { useSyncExternalStore } = React;
 
+function getInitialStoreStateFromUrl() {
+  const url = new URL(window.location);
+  const sequenceFromUrl = url.searchParams.get("sequence") ?? "";
+  return {
+    letters: sequenceFromUrl,
+    lettersState: Array.from(sequenceFromUrl).map((letter) => [letter, false]),
+  };
+}
+
 const store = (() => {
   const subject = new BehaviorSubject({
     isInitialized: false,
     dictionary: null,
     trie: null,
 
-    letters: "",
-    lettersState: [],
+    ...getInitialStoreStateFromUrl(),
     playedWords: [],
 
     message: "",
