@@ -133,7 +133,7 @@
       
       let safe_appends = apps.filter(
         letter => !dictionary.has(word + letter))
-      let safe_prepends = apps.filter(
+      let safe_prepends = preps.filter(
         letter => !dictionary.has(letter + word))
 
       message.innerHTML =
