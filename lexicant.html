@@ -35,7 +35,6 @@
       <input maxLength=1 type="text" id="append" class="gameBoardLetter">
     </div>
     <button id="undoButton">Undo</button>
-    <button id="hintsButton">Hints</button>
     <button id="challengeButton">Challenge</button>
     <div>Words played this session:<pre id="playedWords">[]</pre></div>
 
@@ -54,6 +53,34 @@ async function loadDictionary() {
   store.setDictionaryAndTrie(dictionary, trie);
 }
 
+function Hints() {
+  const [isShown, setIsShown] = React.useState(() => !!(new URL(window.location).searchParams.get("hints")))
+
+  const storeData = store.useStoreData();
+  const {trie} = storeData;
+
+  const apps = trie.append().get(storeData.letters)
+  const preps = trie.prepend().get(storeData.letters)
+  const winning_appends = apps.filter(letter => trie.perfectPlay(storeData.letters + letter) === 1)
+  const winning_prepends = preps.filter(letter => trie.perfectPlay(letter + storeData.letters) === 1)
+  const safe_appends = apps.filter(letter => !store.isDictionaryWord(storeData.letters + letter))
+  const safe_prepends = preps.filter(letter => !store.isDictionaryWord(letter + storeData.letters))
+
+  return (
+    <div>
+      <button onClick={() => setIsShown(prev => !prev)}>{isShown ? 'Hide' : 'Show'} Hints</button>
+      {isShown && <React.Fragment>
+        <div>valid prepends: {preps.join(", ")}</div>
+        <div>valid appends: {apps.join(", ")}</div>
+        <div>winning prepends: {winning_prepends.join(", ")}</div>
+        <div>winning appends: {winning_appends.join(", ")}</div>
+        <div>safe prepends: {safe_prepends.join(", ")}</div>
+        <div>safe appends: {safe_appends.join(", ")}</div>
+      </React.Fragment>}
+    </div>
+  )
+}
+
 function App() {
   const {isInitialized, letters, message} = store.useStoreData();
 
@@ -69,6 +96,7 @@ function App() {
         {Array.from(letters).map((letter, index) => <div key={index} className="gameBoardLetter">{letter}</div>)}
         <input type="text" className="gameBoardLetter" value="" onChange={ev => {}} />
       </div>
+      <Hints />
       <div>Message: {message}</div>
     </div>
   );
@@ -121,7 +149,6 @@ function oldMain() {
       updateLettersState("pop")
       url.searchParams.set("sequence", letters)
       history.pushState({}, "", url)
-      showHints()
     }
 
     function refreshLettersUI() {
@@ -191,20 +218,16 @@ function oldMain() {
             (winning_prepends.length === 0 || Math.random() > .5)) {
           let move = randomChoice(winning_appends)
           computerAppend(move)
-          showHints()
         } else if (winning_prepends.length !== 0) {
           let move = randomChoice(winning_prepends)
           computerPrepend(move)
-          showHints()
         } else if (safe_appends.length !== 0 &&
             (safe_prepends.length === 0 || Math.random() > .5)) {
           let move = randomChoice(safe_appends)
           computerAppend(move)
-          showHints()
         } else if (safe_prepends.length !== 0) {
           let move = randomChoice(safe_prepends)
           computerPrepend(move)
-          showHints()
         } else if (apps.length !== 0 &&
           (preps.length === 0 || Math.random() > .5)) {
           let move = randomChoice(apps)
@@ -212,8 +235,6 @@ function oldMain() {
           if (store.isDictionaryWord(word + move)) {
             store.setMessage(`Word is ${word + move}. Computer loses!`)
             resetWord()
-          } else {
-            showHints()
           }
         } else if (preps.length !== 0) {
           let move = randomChoice(preps)
@@ -221,8 +242,6 @@ function oldMain() {
           if (store.isDictionaryWord(move + word)) {
             store.setMessage(`Word is ${move + word}. Computer loses!`)
             resetWord()
-          } else {
-            showHints()
           }
         } else {
           store.setMessage(word + ": computer challenges you! There's no valid continuation")
@@ -239,35 +258,6 @@ function oldMain() {
 
     function computerAppend(letter) {
       updateLettersState("end", letter)
-    }
-
-    function showHints(force = false) {
-      if (!force && !url.searchParams.get("hints")) {
-        return
-      }
-      // TODO: just use the letters variable instead of word
-      const word = letters
-      let apps = store.getTrie().append().get(word)
-      let preps = store.getTrie().prepend().get(word)
-      let winning_appends = apps.filter(
-        letter => store.getTrie().perfectPlay(word + letter) === 1)
-
-      let winning_prepends = preps.filter(
-        letter => store.getTrie().perfectPlay(letter + word) === 1)
-      
-      let safe_appends = apps.filter(
-        letter => !store.isDictionaryWord(word + letter))
-      let safe_prepends = preps.filter(
-        letter => !store.isDictionaryWord(letter + word))
-
-      store.setMessage(
-        "valid prepends: " + preps + "<br>" +
-        "valid appends: " + apps + "<br>" +
-        "winning prepends: " + winning_prepends + "<br>" +
-        "winning appends: " + winning_appends + "<br>" +
-        "safe prepends: " + safe_prepends + "<br>" +
-        "safe appends: " + safe_appends + "<br>"
-      )
     }
 
     function resetGame(endingWord) {
@@ -297,10 +287,7 @@ function oldMain() {
     prepend.oninput = prependLetter
     append.oninput = appendLetter
     undoButton.onclick = undo
-    hintsButton.onclick = () => showHints(true)
     challengeButton.onclick = respondToChallenge
-
-    showHints()
   }
 
 
