@@ -115,13 +115,19 @@
           showHints()
         } else if (apps.length !== 0 &&
           (preps.length === 0 || Math.random() > .5)) {
-            let move = randomChoice(apps)
-            computerAppend(move)
+          let move = randomChoice(apps)
+          computerAppend(move)
+          if (dictionary.has(word + move)) {
             showHints()
+            message.innerHTML = "computer loses!"
+          }
         } else if (preps.length !== 0) {
           let move = randomChoice(preps)
           computerPrepend(move)
-          showHints()
+          if (dictionary.has(move + word)) {
+            showHints()
+            message.innerHTML = "computer loses!"
+          }
         } else {
           message.innerHTML = word + ": computer challenges you! There's no valid continuation"
           this.resetWord()
