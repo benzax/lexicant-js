@@ -13,6 +13,7 @@
     <input maxLength=1 type="text" id="append">
     <button id="button">Undo</button>
     <div id="message"></div>
+    <div>Words played this session:<pre id="playedWords">[]</pre></div>
 </body>
 
 <script src="/LetterBitMapTrie.js"></script>
@@ -25,15 +26,17 @@
     let button = document.getElementById("button")
     let message = document.getElementById("message")
 
-    let dictionary = []
+    let dictionary = new Set()
+
+    const playedWordsUI = document.getElementById("playedWords")
+    const playedWords = []
 
     async function getDictionary() {
         response = await fetch("/dictionary.json")
-        dictionary = await response.json()
-        return dictionary
+        return await response.json()
     }
 
-    getDictionary().then((value) => doMoreJavascript(value))
+    getDictionary().then(doMoreJavascript)
 
     function doMoreJavascript(dict) {
         dictionary = new Set(dict.filter(word => word.length > 3))
@@ -78,7 +81,7 @@
       word = letters.innerHTML
       if (dictionary.has(word)) {
          message.innerHTML = word + " is in the dictionary, you lost"
-         this.resetWord()
+         this.resetGame(word)
       } else {
         let apps = trie.append().get(word)
         let preps = trie.prepend().get(word)
@@ -134,7 +137,7 @@
           }
         } else {
           message.innerHTML = word + ": computer challenges you! There's no valid continuation"
-          this.resetWord()
+          this.resetGame(word)
         }
       }
     }
@@ -171,9 +174,12 @@
         "safe appends: " + safe_appends + "<br>"
     }
 
-    function resetWord() {
-        this.letters.innerHTML = ""
-        this.letters.state = []
+    function resetGame(endingWord) {
+      playedWords.push(word);
+      playedWordsUI.innerText = JSON.stringify(playedWords, null, 2)
+
+      this.letters.innerHTML = ""
+      this.letters.state = []
     }
 
     function randomChoice(list) {
