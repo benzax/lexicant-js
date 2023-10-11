@@ -2,15 +2,17 @@
 
 <head>
   <title>Lexicant game</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inconsolata&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700">
   <link rel="stylesheet" href="/style.css" type="text/css">
 </head>
 <body>
     <h1>Lexicant game</h1>
     </br>
-    <input autoFocus="true" maxLength=1 type="text" id="prepend">
-    <span id="letters"></span>
-    <input maxLength=1 type="text" id="append">
+    <div id="gameBoard">
+      <input autoFocus="true" maxLength=1 type="text" id="prepend" class="gameBoardLetter">
+      <input maxLength=1 type="text" id="append" class="gameBoardLetter">
+    </div>
     <button id="button">Undo</button>
     <div id="message"></div>
     <div>Words played this session:<pre id="playedWords">[]</pre></div>
@@ -19,13 +21,16 @@
 <script src="/LetterBitMapTrie.js"></script>
 
 <script>
-    let prepend = document.getElementById("prepend")
-    let append = document.getElementById("append")
-    let letters = document.getElementById("letters")
-    let button = document.getElementById("button")
-    let message = document.getElementById("message")
+    const prepend = document.getElementById("prepend")
+    const append = document.getElementById("append")
+    let letters = ""
+    const lettersUI = document.getElementById("gameBoard")
+    let lettersState = []
+    const button = document.getElementById("button")
+    const message = document.getElementById("message")
 
     let dictionary = new Set()
+    let trie = null
 
     const playedWordsUI = document.getElementById("playedWords")
     const playedWords = []
@@ -47,7 +52,6 @@
     function doMoreJavascript(dict) {
         dictionary = new Set(dict.filter(word => word.length > 3))
         trie = new LetterBitMapTrie(dictionary)
-        this.trie = trie
         showHints()
     }
 
@@ -68,22 +72,32 @@
       history.pushState({}, "", url)
       showHints()
     }
+
+    function refreshLettersUI() {
+      lettersUI.innerHTML = Array.from(letters).map(letter => `<div class="gameBoardLetter">${letter}</div>`).join("")
+      lettersUI.prepend(prepend)
+      lettersUI.append(append)
+      prepend.value = ""
+      append.value = ""
+    }
     
     function updateLettersState(mode, char = null) {
       if (mode === "end") {
-        letters.state.push([char, false]) 
-        letters.innerHTML = letters.innerHTML + char
+        lettersState.push([char, false]) 
+        letters += char
       } else if (mode === "front") {
-        letters.state.push([char, true]) 
-        letters.innerHTML = char + letters.innerHTML
+        lettersState.push([char, true]) 
+        letters = char + letters
       } else if (mode === "pop") {
-        let arr = letters.state.pop()
+        let arr = lettersState.pop()
         if (arr[1]) {
-          letters.innerHTML = letters.innerHTML.substring(1)
+          letters = letters.substring(1)
         } else {
-          letters.innerHTML = letters.innerHTML.substring(0, letters.innerHTML.length - 1)
+          letters = letters.substring(0, letters.length - 1)
         }
       }
+
+      refreshLettersUI();
     }
 
     function updateLetters(mode, char = null) {
@@ -99,7 +113,8 @@
       }
       char = char.toLowerCase()
       updateLettersState(mode, char)
-      word = letters.innerHTML
+      // TODO: just use the letters variable instead of word
+      const word = letters
       if (dictionary.has(word)) {
          message.innerHTML = word + " is in the dictionary, you lost"
          this.resetGame(word)
@@ -177,7 +192,8 @@
       if (!url.searchParams.get("hints")) {
         return
       }
-      word = letters.innerHTML
+      // TODO: just use the letters variable instead of word
+      const word = letters
       let apps = trie.append().get(word)
       let preps = trie.prepend().get(word)
       let winning_appends = apps.filter(
@@ -201,11 +217,12 @@
     }
 
     function resetGame(endingWord) {
-      playedWords.push(word);
+      playedWords.push(endingWord);
       playedWordsUI.innerText = JSON.stringify(playedWords, null, 2)
 
-      this.letters.innerHTML = ""
-      this.letters.state = []
+      letters = ""
+      lettersState = []
+      refreshLettersUI()
     }
 
     function randomChoice(list) {

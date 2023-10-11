@@ -1,6 +1,7 @@
 * {
-  font-family: "Inconsolata", monospace;
+  font-family: "Nunito", sans-serif;
   font-size: 18px;
+  font-weight: 400;
   margin: 0;
 }
 
@@ -10,12 +11,6 @@ input[type="text"] {
   background-color: midnightblue;
   color: yellow;
   padding: 12px;
-}
-
-input[type="text"] {
-  border: 2px solid yellow;
-  border-radius: 8px;
-  padding: 6px;
 }
 
 button {
@@ -30,4 +25,36 @@ button {
 
 h1 {
   font-size: 24px;
+}
+
+#gameBoard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 6px;
+  gap: 6px;
+}
+
+.gameBoardLetter {
+  background-color: yellow;
+  color: midnightblue;
+  text-transform: uppercase;
+  font-size: 24px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+input[type="text"].gameBoardLetter {
+  background-color: orange;
+  caret-color: midnightblue;
+}
+
+pre {
+  font-family: "Inconsolata", monospace;
 }
