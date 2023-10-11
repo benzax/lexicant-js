@@ -114,23 +114,15 @@ async function main() {
 
   ReactDOM.createRoot(document.getElementById('main')).render(<App />)
 
-  oldMain()
-}
-
-window.addEventListener('load', main, {once: true})
-
-function oldMain() {
     const prepend = document.getElementById("prepend")
     const append = document.getElementById("append")
     const lettersUI = document.getElementById("gameBoard")
     const undoButton = document.getElementById("undoButton")
     const challengeButton = document.getElementById("challengeButton")
-
-    let lettersState = []
     
     let url = new URL(window.location);
     if (url.searchParams.has('sequence')) {
-      lettersState = url.searchParams.get('sequence').split('').map((x) => [x, false])
+      store.setLettersState(url.searchParams.get('sequence').split('').map((x) => [x, false]))
       store.setLetters(url.searchParams.get('sequence'))
       refreshLettersUI()
     }
@@ -162,13 +154,14 @@ function oldMain() {
     
     function updateLettersState(mode, char = null) {
       if (mode === "end") {
-        lettersState.push([char, false])
+        store.setLettersState([...store.getLettersState(), [char, false]])
         store.setLetters(store.getLetters() + char)
       } else if (mode === "front") {
-        lettersState.push([char, true]) 
+        store.setLettersState([...store.getLettersState(), [char, true]])
         store.setLetters(char + store.getLetters())
       } else if (mode === "pop") {
-        let arr = lettersState.pop()
+        const arr = store.getLettersState().at(-1)
+        store.setLettersState(store.getLettersState().slice(0, -1))
         if (arr[1]) {
           store.setLetters(store.getLetters().slice(1))
         } else {
@@ -263,8 +256,7 @@ function oldMain() {
     function resetGame(endingWord) {
       store.addPlayedWord(endingWord);
 
-      store.setLetters("")
-      lettersState = []
+      store.resetGame()
       refreshLettersUI()
     }
 
@@ -289,8 +281,10 @@ function oldMain() {
     challengeButton.onclick = respondToChallenge
   }
 
-
 function randomChoice(list) {
   return list[Math.floor(Math.random()*list.length)]
 }
+
+window.addEventListener('load', main, {once: true})
+
 </script>
