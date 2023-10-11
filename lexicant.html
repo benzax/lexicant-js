@@ -19,6 +19,7 @@
     </div>
     <button id="undoButton">Undo</button>
     <button id="hintsButton">Hints</button>
+    <button id="challengeButton">Challenge</button>
     <div id="message"></div>
     <div>Words played this session:<pre id="playedWords">[]</pre></div>
 </body>
@@ -33,6 +34,7 @@
     let lettersState = []
     const undoButton = document.getElementById("undoButton")
     const hintsButton = document.getElementById("hintsButton")
+    const challengeButton = document.getElementById("challengeButton")
     const message = document.getElementById("message")
 
     let dictionary = new Set()
@@ -232,6 +234,10 @@
       refreshLettersUI()
     }
 
+    function respondToChallenge() {
+      // TODO
+    }
+
     function randomChoice(list) {
         return list[Math.floor(Math.random()*list.length)]
     }
@@ -240,4 +246,5 @@
     append.oninput = appendLetter
     undoButton.onclick = undo
     hintsButton.onclick = function() { showHints(force = true) }
+    challengeButton.onclick = respondToChallenge
 </script>
