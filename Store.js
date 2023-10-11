@@ -8,6 +8,7 @@ const store = (() => {
     trie: null,
 
     letters: "",
+    playedWords: [],
 
     message: "",
   });
@@ -32,6 +33,12 @@ const store = (() => {
     setLetters(newLetters) {
       subject.next(
         immutableUpdate(getSnapshot(), { letters: { $set: newLetters } })
+      );
+    },
+
+    addPlayedWord(word) {
+      subject.next(
+        immutableUpdate(getSnapshot(), { playedWords: { $push: word } })
       );
     },
 
