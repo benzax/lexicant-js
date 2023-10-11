@@ -59,5 +59,9 @@ const store = (() => {
     getTrie() {
       return getSnapshot().trie;
     },
+
+    getLetters() {
+      return getSnapshot().letters;
+    },
   };
 })();
