@@ -82,7 +82,7 @@
         let winning_appends = apps.filter(
           letter => trie.perfectPlay(word + letter) === 1)
 
-        let winning_prepends = apps.filter(
+        let winning_prepends = preps.filter(
           letter => trie.perfectPlay(letter + word) === 1)
         //message.innerHTML = preps + "<br>" + apps + "<br>" + 
         //  winning_appends + "<br>" + winning_prepends
