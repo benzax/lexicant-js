@@ -30,14 +30,13 @@
 <body>
     <h1>Lexicant game</h1>
     </br>
-    <div id="gameBoard">
+    <div id="gameBoard" class="gameBoard">
       <input autoFocus="true" maxLength=1 type="text" id="prepend" class="gameBoardLetter">
       <input maxLength=1 type="text" id="append" class="gameBoardLetter">
     </div>
     <button id="undoButton">Undo</button>
     <button id="hintsButton">Hints</button>
     <button id="challengeButton">Challenge</button>
-    <div id="message"></div>
     <div>Words played this session:<pre id="playedWords">[]</pre></div>
 
     <div id="main"></div>
@@ -56,13 +55,23 @@ async function loadDictionary() {
 }
 
 function App() {
-  const {isInitialized, message} = store.useStoreData();
+  const {isInitialized, letters, message} = store.useStoreData();
 
   if (!isInitialized) {
     return <div>Loading dictionary...</div>;
   }
 
-  return <div><h1>Lexicant game</h1><div>Message: {message}</div></div>;
+  return (
+    <div>
+      <h1>Lexicant game</h1>
+      <div className="gameBoard">
+        <input type="text" className="gameBoardLetter" value="" onChange={ev => {}} />
+        {Array.from(letters).map((letter, index) => <div key={index} className="gameBoardLetter">{letter}</div>)}
+        <input type="text" className="gameBoardLetter" value="" onChange={ev => {}} />
+      </div>
+      <div>Message: {message}</div>
+    </div>
+  );
 }
 
 async function main() {
@@ -116,6 +125,7 @@ function oldMain() {
     }
 
     function refreshLettersUI() {
+      store.setLetters(letters);
       lettersUI.innerHTML = Array.from(letters).map(letter => `<div class="gameBoardLetter">${letter}</div>`).join("")
       lettersUI.prepend(prepend)
       lettersUI.append(append)
@@ -143,7 +153,7 @@ function oldMain() {
     }
 
     function updateLetters(mode, char = null) {
-      message.innerHTML = ""
+      store.setMessage("")
       if (char !== null && !char.match(/[a-z]/i)) {
         if (char === " ") {
           if (document.activeElement === prepend) {
@@ -159,7 +169,7 @@ function oldMain() {
       // TODO: just use the letters variable instead of word
       const word = letters
       if (store.isDictionaryWord(word)) {
-         setMessage(word + " is in the dictionary, you lost")
+         store.setMessage(word + " is in the dictionary, you lost")
          resetGame(word)
       } else {
         let apps = store.getTrie().append().get(word)
@@ -169,7 +179,7 @@ function oldMain() {
 
         let winning_prepends = preps.filter(
           letter => store.getTrie().perfectPlay(letter + word) === 1)
-        //setMessage(preps + "<br>" + apps + "<br>" + 
+        //store.setMessage(preps + "<br>" + apps + "<br>" + 
         //  winning_appends + "<br>" + winning_prepends)
 
         let safe_appends = apps.filter(
@@ -200,7 +210,7 @@ function oldMain() {
           let move = randomChoice(apps)
           computerAppend(move)
           if (store.isDictionaryWord(word + move)) {
-            setMessage(`Word is ${word + move}. Computer loses!`)
+            store.setMessage(`Word is ${word + move}. Computer loses!`)
             resetWord()
           } else {
             showHints()
@@ -209,13 +219,13 @@ function oldMain() {
           let move = randomChoice(preps)
           computerPrepend(move)
           if (store.isDictionaryWord(move + word)) {
-            setMessage(`Word is ${move + word}. Computer loses!`)
+            store.setMessage(`Word is ${move + word}. Computer loses!`)
             resetWord()
           } else {
             showHints()
           }
         } else {
-          setMessage(word + ": computer challenges you! There's no valid continuation")
+          store.setMessage(word + ": computer challenges you! There's no valid continuation")
           resetGame(word)
         }
       }
@@ -250,7 +260,7 @@ function oldMain() {
       let safe_prepends = preps.filter(
         letter => !store.isDictionaryWord(letter + word))
 
-      setMessage(
+      store.setMessage(
         "valid prepends: " + preps + "<br>" +
         "valid appends: " + apps + "<br>" +
         "winning prepends: " + winning_prepends + "<br>" +
@@ -284,15 +294,6 @@ function oldMain() {
       resetGame(letters)
     }
 
-    function randomChoice(list) {
-        return list[Math.floor(Math.random()*list.length)]
-    }
-
-    function setMessage(message) {
-      store.setMessage(message);
-      document.getElementById("message").innerHTML = message;
-    }
-
     prepend.oninput = prependLetter
     append.oninput = appendLetter
     undoButton.onclick = undo
@@ -301,4 +302,9 @@ function oldMain() {
 
     showHints()
   }
+
+
+function randomChoice(list) {
+  return list[Math.floor(Math.random()*list.length)]
+}
 </script>
