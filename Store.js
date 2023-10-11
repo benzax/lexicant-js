@@ -8,6 +8,7 @@ const store = (() => {
     trie: null,
 
     letters: "",
+    lettersState: [],
     playedWords: [],
 
     message: "",
@@ -36,9 +37,26 @@ const store = (() => {
       );
     },
 
+    resetGame() {
+      subject.next(
+        immutableUpdate(getSnapshot(), {
+          letters: { $set: "" },
+          lettersState: { $set: [] },
+        })
+      );
+    },
+
+    setLettersState(newLettersState) {
+      subject.next(
+        immutableUpdate(getSnapshot(), {
+          lettersState: { $set: newLettersState },
+        })
+      );
+    },
+
     addPlayedWord(word) {
       subject.next(
-        immutableUpdate(getSnapshot(), { playedWords: { $push: word } })
+        immutableUpdate(getSnapshot(), { playedWords: { $push: [word] } })
       );
     },
 
@@ -62,6 +80,10 @@ const store = (() => {
 
     getLetters() {
       return getSnapshot().letters;
+    },
+
+    getLettersState() {
+      return getSnapshot().lettersState;
     },
   };
 })();
