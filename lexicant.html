@@ -22,7 +22,6 @@
     let prepend = document.getElementById("prepend")
     let append = document.getElementById("append")
     let letters = document.getElementById("letters")
-    letters.state = []
     let button = document.getElementById("button")
     let message = document.getElementById("message")
 
@@ -30,6 +29,14 @@
 
     const playedWordsUI = document.getElementById("playedWords")
     const playedWords = []
+    
+    let url = new URL(window.location);
+    letters.state = []
+    if (url.searchParams.has('sequence')) {
+      letters.state = url.searchParams.get('sequence').split('').map((x) => [x, false])
+      letters.innerHTML = url.searchParams.get('sequence')
+    }
+    let dictionary = []
 
     async function getDictionary() {
         response = await fetch("/dictionary.json")
@@ -42,6 +49,7 @@
         dictionary = new Set(dict.filter(word => word.length > 3))
         trie = new LetterBitMapTrie(dictionary)
         this.trie = trie
+        showHints()
     }
 
     function prependLetter(event) {
@@ -57,6 +65,9 @@
     function undo() {
       updateLettersState("pop")
       updateLettersState("pop")
+      url.searchParams.set("sequence", letters.innerHTML)
+      history.pushState({}, "", url)
+      showHints()
     }
     
     function updateLettersState(mode, char = null) {
@@ -140,6 +151,8 @@
           this.resetGame(word)
         }
       }
+      url.searchParams.set("sequence", letters.innerHTML)
+      history.pushState({}, "", url)
     }
 
     function computerPrepend(letter) {
@@ -151,6 +164,9 @@
     }
 
     function showHints() {
+      if (!url.searchParams.get("hints")) {
+        return
+      }
       word = letters.innerHTML
       let apps = trie.append().get(word)
       let preps = trie.prepend().get(word)
