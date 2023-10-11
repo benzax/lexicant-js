@@ -17,7 +17,8 @@
       <input autoFocus="true" maxLength=1 type="text" id="prepend" class="gameBoardLetter">
       <input maxLength=1 type="text" id="append" class="gameBoardLetter">
     </div>
-    <button id="button">Undo</button>
+    <button id="undoButton">Undo</button>
+    <button id="hintsButton">Hints</button>
     <div id="message"></div>
     <div>Words played this session:<pre id="playedWords">[]</pre></div>
 </body>
@@ -30,7 +31,8 @@
     let letters = ""
     const lettersUI = document.getElementById("gameBoard")
     let lettersState = []
-    const button = document.getElementById("button")
+    const undoButton = document.getElementById("undoButton")
+    const hintsButton = document.getElementById("hintsButton")
     const message = document.getElementById("message")
 
     let dictionary = new Set()
@@ -105,6 +107,7 @@
     }
 
     function updateLetters(mode, char = null) {
+      message.innerHTML = ""
       if (char !== null && !char.match(/[a-z]/i)) {
         if (char === " ") {
           if (document.activeElement === prepend) {
@@ -192,8 +195,8 @@
       updateLettersState("end", letter)
     }
 
-    function showHints() {
-      if (!url.searchParams.get("hints")) {
+    function showHints(force = false) {
+      if (!force && !url.searchParams.get("hints")) {
         return
       }
       // TODO: just use the letters variable instead of word
@@ -235,5 +238,6 @@
 
     prepend.oninput = prependLetter
     append.oninput = appendLetter
-    button.onclick = undo
+    undoButton.onclick = undo
+    hintsButton.onclick = function() { showHints(force = true) }
 </script>
