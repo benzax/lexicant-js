@@ -36,7 +36,6 @@
       letters.state = url.searchParams.get('sequence').split('').map((x) => [x, false])
       letters.innerHTML = url.searchParams.get('sequence')
     }
-    let dictionary = []
 
     async function getDictionary() {
         response = await fetch("/dictionary.json")
