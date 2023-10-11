@@ -4,6 +4,8 @@ const { useSyncExternalStore } = React;
 const store = (() => {
   const subject = new BehaviorSubject({
     isInitialized: false,
+    dictionary: null,
+    trie: null,
 
     message: "",
   });
@@ -23,6 +25,24 @@ const store = (() => {
       subject.next(
         immutableUpdate(getSnapshot(), { message: { $set: newMessage } })
       );
+    },
+
+    setDictionaryAndTrie(dictionary, trie) {
+      subject.next(
+        immutableUpdate(getSnapshot(), {
+          dictionary: { $set: dictionary },
+          trie: { $set: trie },
+          isInitialized: { $set: true },
+        })
+      );
+    },
+
+    isDictionaryWord(s) {
+      return getSnapshot().dictionary.has(s);
+    },
+
+    getTrie() {
+      return getSnapshot().trie;
     },
   };
 })();
