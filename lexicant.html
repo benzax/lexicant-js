@@ -142,7 +142,11 @@
           <button onClick={undo} style={{ marginRight: 12 }}>
             Undo
           </button>
-          <button onClick={respondToChallenge}>Challenge</button>
+          <button onClick={function() {
+            completeToWord();
+            store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
+            resetGame(store.getLetters());
+          }}>Challenge</button>
           <Hints margin="12px 0" />
           <div>Message: {message}</div>
           <PlayedWords margin="12px 0" />
@@ -265,10 +269,12 @@
             resetGame(move + word);
           }
         } else {
+          updateLettersState("pop")
+          completeToWord()
           store.setMessage(
-            word + ": computer challenges you! There's no valid continuation"
+            `${word} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`
           );
-          resetGame(word);
+          resetGame(store.getLetters())
         }
       }
       updateSequenceInUrl();
@@ -287,8 +293,9 @@
       store.resetGame();
     }
 
-    function respondToChallenge() {
-      while (!dictionary.has(store.getLetters())) {
+    function completeToWord() {
+      while (!store.isDictionaryWord(store.getLetters())) {
+        const trie = store.getTrie();
         const apps = trie.append().get(store.getLetters());
         const preps = trie.prepend().get(store.getLetters());
         const index = Math.floor(Math.random() * (apps.length + preps.length));
@@ -298,8 +305,6 @@
           computerPrepend(preps[index - apps.length]);
         }
       }
-      store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
-      resetGame(store.getLetters());
     }
 
     function randomChoice(list) {
