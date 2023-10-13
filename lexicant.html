@@ -208,17 +208,38 @@
       }
       char = char.toLowerCase();
       updateLettersHistory(mode, char);
-      const letters = store.getLetters();
+      let letters = store.getLetters();
       if (store.isDictionaryWord(letters)) {
         store.setMessage(letters + " is in the dictionary, you lost");
         resetGame(letters);
       } else {
-        optimalPlay(letters);
+        if (new URL(window.location).searchParams.get("difficulty") === "random") {
+          makeRandomMove(letters);
+        } else {
+          makeOptimalMove(letters);
+        }
+        letters = store.getLetters();
+        if (store.isDictionaryWord(letters)) {
+          store.setMessage(`Word is ${letters}. Computer loses!`);
+          resetGame(letters);
+        }
       }
       updateSequenceInUrl();
     }
 
-    function optimalPlay(letters) {
+    function makeRandomMove(letters) {
+      const trie = store.getTrie();
+      const apps = trie.append().get(store.getLetters());
+      const preps = trie.prepend().get(store.getLetters());
+      const index = Math.floor(Math.random() * (apps.length + preps.length));
+      if (index < apps.length) {
+        computerAppend(apps[index]);
+      } else {
+        computerPrepend(preps[index - apps.length]);
+      }
+    }
+
+    function makeOptimalMove(letters) {
       let apps = store.getTrie().append().get(letters);
       let preps = store.getTrie().prepend().get(letters);
       let winning_appends = apps.filter(
@@ -262,17 +283,9 @@
       ) {
         let move = randomChoice(apps);
         computerAppend(move);
-        if (store.isDictionaryWord(letters + move)) {
-          store.setMessage(`Word is ${letters + move}. Computer loses!`);
-          resetGame(letters + move);
-        }
       } else if (preps.length !== 0) {
         let move = randomChoice(preps);
         computerPrepend(move);
-        if (store.isDictionaryWord(move + letters)) {
-          store.setMessage(`Word is ${move + letters}. Computer loses!`);
-          resetGame(move + letters);
-        }
       } else {
         updateLettersHistory("pop")
         completeToWord()
@@ -298,15 +311,7 @@
 
     function completeToWord() {
       while (!store.isDictionaryWord(store.getLetters())) {
-        const trie = store.getTrie();
-        const apps = trie.append().get(store.getLetters());
-        const preps = trie.prepend().get(store.getLetters());
-        const index = Math.floor(Math.random() * (apps.length + preps.length));
-        if (index < apps.length) {
-          computerAppend(apps[index]);
-        } else {
-          computerPrepend(preps[index - apps.length]);
-        }
+        makeRandomMove(store.getLetters());
       }
     }
 
