@@ -208,76 +208,79 @@
       }
       char = char.toLowerCase();
       updateLettersHistory(mode, char);
-      // TODO: consider renaming to "letters"
-      const word = store.getLetters();
-      if (store.isDictionaryWord(word)) {
-        store.setMessage(word + " is in the dictionary, you lost");
-        resetGame(word);
+      const letters = store.getLetters();
+      if (store.isDictionaryWord(letters)) {
+        store.setMessage(letters + " is in the dictionary, you lost");
+        resetGame(letters);
       } else {
-        let apps = store.getTrie().append().get(word);
-        let preps = store.getTrie().prepend().get(word);
-        let winning_appends = apps.filter(
-          (letter) => store.getTrie().perfectPlay(word + letter) === 1
-        );
-
-        let winning_prepends = preps.filter(
-          (letter) => store.getTrie().perfectPlay(letter + word) === 1
-        );
-        //store.setMessage(preps + "<br>" + apps + "<br>" +
-        //  winning_appends + "<br>" + winning_prepends)
-
-        let safe_appends = apps.filter(
-          (letter) => !store.isDictionaryWord(word + letter)
-        );
-        let safe_prepends = preps.filter(
-          (letter) => !store.isDictionaryWord(letter + word)
-        );
-
-        if (
-          winning_appends.length !== 0 &&
-          (winning_prepends.length === 0 || Math.random() > 0.5)
-        ) {
-          let move = randomChoice(winning_appends);
-          computerAppend(move);
-        } else if (winning_prepends.length !== 0) {
-          let move = randomChoice(winning_prepends);
-          computerPrepend(move);
-        } else if (
-          safe_appends.length !== 0 &&
-          (safe_prepends.length === 0 || Math.random() > 0.5)
-        ) {
-          let move = randomChoice(safe_appends);
-          computerAppend(move);
-        } else if (safe_prepends.length !== 0) {
-          let move = randomChoice(safe_prepends);
-          computerPrepend(move);
-        } else if (
-          apps.length !== 0 &&
-          (preps.length === 0 || Math.random() > 0.5)
-        ) {
-          let move = randomChoice(apps);
-          computerAppend(move);
-          if (store.isDictionaryWord(word + move)) {
-            store.setMessage(`Word is ${word + move}. Computer loses!`);
-            resetGame(word + move);
-          }
-        } else if (preps.length !== 0) {
-          let move = randomChoice(preps);
-          computerPrepend(move);
-          if (store.isDictionaryWord(move + word)) {
-            store.setMessage(`Word is ${move + word}. Computer loses!`);
-            resetGame(move + word);
-          }
-        } else {
-          updateLettersHistory("pop")
-          completeToWord()
-          store.setMessage(
-            `${word} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`
-          );
-          resetGame(store.getLetters())
-        }
+        optimalPlay(letters);
       }
       updateSequenceInUrl();
+    }
+
+    function optimalPlay(letters) {
+      let apps = store.getTrie().append().get(letters);
+      let preps = store.getTrie().prepend().get(letters);
+      let winning_appends = apps.filter(
+        (letter) => store.getTrie().perfectPlay(letters + letter) === 1
+      );
+
+      let winning_prepends = preps.filter(
+        (letter) => store.getTrie().perfectPlay(letter + letters) === 1
+      );
+      //store.setMessage(preps + "<br>" + apps + "<br>" +
+      //  winning_appends + "<br>" + winning_prepends)
+
+      let safe_appends = apps.filter(
+        (letter) => !store.isDictionaryWord(letters + letter)
+      );
+      let safe_prepends = preps.filter(
+        (letter) => !store.isDictionaryWord(letter + letters)
+      );
+
+      if (
+        winning_appends.length !== 0 &&
+        (winning_prepends.length === 0 || Math.random() > 0.5)
+      ) {
+        let move = randomChoice(winning_appends);
+        computerAppend(move);
+      } else if (winning_prepends.length !== 0) {
+        let move = randomChoice(winning_prepends);
+        computerPrepend(move);
+      } else if (
+        safe_appends.length !== 0 &&
+        (safe_prepends.length === 0 || Math.random() > 0.5)
+      ) {
+        let move = randomChoice(safe_appends);
+        computerAppend(move);
+      } else if (safe_prepends.length !== 0) {
+        let move = randomChoice(safe_prepends);
+        computerPrepend(move);
+      } else if (
+        apps.length !== 0 &&
+        (preps.length === 0 || Math.random() > 0.5)
+      ) {
+        let move = randomChoice(apps);
+        computerAppend(move);
+        if (store.isDictionaryWord(letters + move)) {
+          store.setMessage(`Word is ${letters + move}. Computer loses!`);
+          resetGame(letters + move);
+        }
+      } else if (preps.length !== 0) {
+        let move = randomChoice(preps);
+        computerPrepend(move);
+        if (store.isDictionaryWord(move + letters)) {
+          store.setMessage(`Word is ${move + letters}. Computer loses!`);
+          resetGame(move + letters);
+        }
+      } else {
+        updateLettersHistory("pop")
+        completeToWord()
+        store.setMessage(
+          `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`
+        );
+        resetGame(store.getLetters())
+      }
     }
 
     function computerPrepend(letter) {
