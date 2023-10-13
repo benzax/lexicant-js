@@ -181,7 +181,7 @@
         store.setLettersHistory([...store.getLettersHistory(), [char, false]]);
         store.setLetters(store.getLetters() + char);
       } else if (mode === "front") {
-        store.setlettersHistory([...store.getLettersHistory(), [char, true]]);
+        store.setLettersHistory([...store.getLettersHistory(), [char, true]]);
         store.setLetters(char + store.getLetters());
       } else if (mode === "pop") {
         const arr = store.getLettersHistory().at(-1);

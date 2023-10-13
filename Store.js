@@ -6,7 +6,7 @@ function getInitialStoreStateFromUrl() {
   const sequenceFromUrl = url.searchParams.get("sequence") ?? "";
   return {
     letters: sequenceFromUrl,
-    lettersState: Array.from(sequenceFromUrl).map((letter) => [letter, false]),
+    lettersHistory: Array.from(sequenceFromUrl).map((letter) => [letter, false]),
   };
 }
 
@@ -49,15 +49,15 @@ const store = (() => {
       subject.next(
         immutableUpdate(getSnapshot(), {
           letters: { $set: "" },
-          lettersState: { $set: [] },
+          lettersHistory: { $set: [] },
         })
       );
     },
 
-    setLettersState(newLettersState) {
+    setLettersHistory(newLettersHistory) {
       subject.next(
         immutableUpdate(getSnapshot(), {
-          lettersState: { $set: newLettersState },
+          lettersHistory: { $set: newLettersHistory },
         })
       );
     },
@@ -90,8 +90,8 @@ const store = (() => {
       return getSnapshot().letters;
     },
 
-    getLettersState() {
-      return getSnapshot().lettersState;
+    getLettersHistory() {
+      return getSnapshot().lettersHistory;
     },
   };
 })();
