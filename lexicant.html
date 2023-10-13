@@ -171,21 +171,21 @@
     }
 
     function undo() {
-      updateLettersState("pop");
-      updateLettersState("pop");
+      updateLettersHistory("pop");
+      updateLettersHistory("pop");
       updateSequenceInUrl();
     }
 
-    function updateLettersState(mode, char = null) {
+    function updateLettersHistory(mode, char = null) {
       if (mode === "end") {
-        store.setLettersState([...store.getLettersState(), [char, false]]);
+        store.setLettersHistory([...store.getLettersHistory(), [char, false]]);
         store.setLetters(store.getLetters() + char);
       } else if (mode === "front") {
-        store.setLettersState([...store.getLettersState(), [char, true]]);
+        store.setlettersHistory([...store.getLettersHistory(), [char, true]]);
         store.setLetters(char + store.getLetters());
       } else if (mode === "pop") {
-        const arr = store.getLettersState().at(-1);
-        store.setLettersState(store.getLettersState().slice(0, -1));
+        const arr = store.getLettersHistory().at(-1);
+        store.setLettersHistory(store.getLettersHistory().slice(0, -1));
         if (arr[1]) {
           store.setLetters(store.getLetters().slice(1));
         } else {
@@ -207,7 +207,7 @@
         return;
       }
       char = char.toLowerCase();
-      updateLettersState(mode, char);
+      updateLettersHistory(mode, char);
       // TODO: consider renaming to "letters"
       const word = store.getLetters();
       if (store.isDictionaryWord(word)) {
@@ -269,7 +269,7 @@
             resetGame(move + word);
           }
         } else {
-          updateLettersState("pop")
+          updateLettersHistory("pop")
           completeToWord()
           store.setMessage(
             `${word} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`
@@ -281,11 +281,11 @@
     }
 
     function computerPrepend(letter) {
-      updateLettersState("front", letter);
+      updateLettersHistory("front", letter);
     }
 
     function computerAppend(letter) {
-      updateLettersState("end", letter);
+      updateLettersHistory("end", letter);
     }
 
     function resetGame(endingWord) {
