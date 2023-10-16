@@ -142,11 +142,15 @@
           <button onClick={undo} style={{ marginRight: 12 }}>
             Undo
           </button>
-          <button onClick={function() {
-            completeToWord();
-            store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
-            resetGame(store.getLetters());
-          }}>Challenge</button>
+          <button
+            onClick={function () {
+              completeToWord();
+              store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
+              resetGame(store.getLetters());
+            }}
+          >
+            Challenge
+          </button>
           <Hints margin="12px 0" />
           <div>Message: {message}</div>
           <PlayedWords margin="12px 0" />
@@ -213,7 +217,9 @@
         store.setMessage(letters + " is in the dictionary, you lost");
         resetGame(letters);
       } else {
-        if (new URL(window.location).searchParams.get("difficulty") === "random") {
+        if (
+          new URL(window.location).searchParams.get("difficulty") === "random"
+        ) {
           makeRandomMove(letters);
         } else {
           makeOptimalMove(letters);
@@ -296,12 +302,12 @@
         let move = randomChoice(preps);
         computerPrepend(move);
       } else {
-        updateLettersHistory("pop")
-        completeToWord()
+        updateLettersHistory("pop");
+        completeToWord();
         store.setMessage(
           `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`
         );
-        resetGame(store.getLetters())
+        resetGame(store.getLetters());
       }
     }
 
@@ -319,7 +325,10 @@
     }
 
     function completeToWord() {
-      while (!store.isDictionaryWord(store.getLetters())) {
+      while (
+        !store.isDictionaryWord(store.getLetters()) &&
+        store.getLetters().length < 100
+      ) {
         makeRandomMove(store.getLetters());
       }
     }
