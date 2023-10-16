@@ -100,12 +100,12 @@ function reducer(state, action) {
   /*
   * State = {
               initialLetters : string,
-              gameHistory : array of (action, boolean) tuples,
+              gameHistory : array of Actions,
               status : "IN_PROGRESS" || "COMPLETED",
               dictionary : Dictionary
             }
   * action = { type : "undo" } ||
-              { type : "play", letter : string, isFront : boolean } ||
+              { type : "play", letter : string, isFront : boolean, isPlayer : boolean } ||
               { type : "initDict", dict : Dictionary }
   */
  console.log(action);
@@ -115,14 +115,15 @@ function reducer(state, action) {
       return state;
     }
     return { ...state,
-            letters : state.lettersHistory.at(-1).isFront ? state.letters.slice(1) : state.letters.slice(0, -1),
-            lettersHistory : state.lettersHistory.slice(0, -1)
+            gameHistory : state.gameHistory.slice(0, -1)
           };
   }
   case "play": {
+    if (state.gameHistory.length > 0 && state.gameHistory.at(-1).type === "play" && action.isPlayer === state.gameHistory.at(-1).isPlayer) { // idempotency for React compliance
+      return state;
+    }
     return { ...state,
-            letters : action.isFront ? action.letter + state.letters : state.letters + action.letter,
-            lettersHistory : [...state.lettersHistory, (action.letter, action.isFront) ]
+            gameHistory : [...state.gameHistory, action ]
            }
   }
   case "initDict" : {
@@ -143,4 +144,19 @@ function reducer(state, action) {
       status : "IN_PROGRESS",
       dictionary : null,
     };
+  }
+
+  function getLetters(state) {
+    let ret = "";
+    for (const action of state.gameHistory) {
+      if (action.type !== "play") {
+        continue;
+      }
+      if (action.isFront) {
+        ret = action.letter + ret;
+      } else {
+        ret = ret + action.letter;
+      }
+    }
+    return ret;
   }
