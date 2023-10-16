@@ -95,3 +95,52 @@ const store = (() => {
     },
   };
 })();
+
+function reducer(state, action) {
+  /*
+  * State = {
+              initialLetters : string,
+              gameHistory : array of (action, boolean) tuples,
+              status : "IN_PROGRESS" || "COMPLETED",
+              dictionary : Dictionary
+            }
+  * action = { type : "undo" } ||
+              { type : "play", letter : string, isFront : boolean } ||
+              { type : "initDict", dict : Dictionary }
+  */
+ console.log(action);
+ switch(action.type) {
+  case "undo": {
+    if (state.letters.length === 0) {
+      return state;
+    }
+    return { ...state,
+            letters : state.lettersHistory.at(-1).isFront ? state.letters.slice(1) : state.letters.slice(0, -1),
+            lettersHistory : state.lettersHistory.slice(0, -1)
+          };
+  }
+  case "play": {
+    return { ...state,
+            letters : action.isFront ? action.letter + state.letters : state.letters + action.letter,
+            lettersHistory : [...state.lettersHistory, (action.letter, action.isFront) ]
+           }
+  }
+  case "initDict" : {
+    return { ...state,
+            dictionary : action.dictionary
+          };
+    }
+  }
+  return state;
+  }
+
+  function getInitialState() {
+    const url = new URL(window.location);
+    const sequenceFromUrl = url.searchParams.get("sequence") ?? "";
+    return {
+      initialLetters : sequenceFromUrl,
+      gameHistory : [],
+      status : "IN_PROGRESS",
+      dictionary : null,
+    };
+  }

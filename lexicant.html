@@ -42,6 +42,16 @@
   <script src="/Store.js"></script>
 
   <script type="text/babel">
+    async function loadDictionaryNew() {
+      const response = await fetch("/dictionary.json");
+      const dictionaryWordList = await response.json();
+      const set = new Set(
+        dictionaryWordList.filter((word) => word.length > 3)
+      );
+      const trie = new LetterBitMapTrie(set);
+      return { set, trie };
+    }
+
     async function loadDictionary() {
       const response = await fetch("/dictionary.json");
       const dictionaryWordList = await response.json();
@@ -106,6 +116,11 @@
     }
 
     function App() {
+      const [state, dispatch] = React.useReducer(reducer, undefined, getInitialState);
+      console.log(state);
+      React.useEffect(() => {
+        loadDictionaryNew().then(dictionary => dispatch({ type : "initDict", dictionary }));
+      }, []);
       const { isInitialized, letters, message } = store.useStoreData();
 
       if (!isInitialized) {
