@@ -115,6 +115,60 @@
       );
     }
 
+    function getComputerMove(state) {
+      if (
+          new URL(window.location).searchParams.get("difficulty") === "random"
+        ) {
+          return getRandomMove(state);
+        } else {
+          return getOptimalMove(state);
+        }
+    }
+
+    function getRandomMove(state) {
+      const letter = String.fromCharCode("a".charCodeAt(0) + Math.floor((Math.random() * 26)));
+      const pos = Math.random() < .5;
+      return { type : "play", letter, isFront : pos, isPlayer : false };
+    }
+
+    function getActionBySamplingLists(prepends, appends) {
+      const length = prepends.length + appends.length;
+      if (length === 0) {
+        return undefined;
+      }
+      const index = Math.floor(Math.random() * length);
+      if (index < prepends.length) {
+        return { type : "play", letter : prepends[index], isFront : true, isPlayer : false };
+      } else {
+        return { type : "play", letter : appends[index - prepends.length], isFront : false, isPlayer : false };
+      }
+    }
+
+    function getOptimalMove(state) {
+      const { set, trie } = state.dictionary;
+      const letters = getLetters(state);
+      const apps = trie.append().get(letters);
+      const preps = trie.prepend().get(letters);
+      const winning_appends = apps.filter(
+        (letter) => trie.perfectPlay(letters + letter) === 1
+      );
+      const winning_prepends = preps.filter(
+        (letter) => trie.perfectPlay(letter + letters) === 1
+      );
+
+      const safe_appends = apps.filter(
+        (letter) => !set.has(letters + letter)
+      );
+      const safe_prepends = preps.filter(
+        (letter) => !set.has(letter + letters)
+      );
+
+      return getActionBySamplingLists(winning_prepends, winning_appends) ??
+              getActionBySamplingLists(safe_prepends, safe_appends) ??
+              getActionBySamplingLists(preps, apps) ??
+              { type : "challenge", isPlayer : false };
+    }
+
     function Board({ state, dispatch }) {
       return Array.from(getLetters(state)).map((letter, index) => (
                     <div key={index} className="gameBoardLetter">
@@ -130,11 +184,13 @@
         loadDictionaryNew().then(dictionary => dispatch({ type : "initDict", dictionary }));
       }, []);
       React.useEffect(() => {
+        if (state.dictionary == null) {
+          return;
+        }
         console.log("Computer move might be needed!");
-        if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer) {
-          const letter = String.fromCharCode("a".charCodeAt(0) + Math.floor((Math.random() * 26)));
-          const pos = Math.random() < .5;
-          setTimeout(() => dispatch({ type : "play", letter, isFront : pos, isPlayer : false }), 1000);
+        if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer && state.gameHistory.at(-1).type !== "challenge") {
+          console.log(getLetters(state));
+          setTimeout(() => dispatch(getComputerMove(state)), 1000);
         }
       }, [state.gameHistory]);
       const { isInitialized, letters, message } = store.useStoreData();
@@ -195,6 +251,7 @@
           </button>
           <button
             onClick={function () {
+              dispatch({ type : "challenge", isPlayer : true });
               completeToWord();
               store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
               resetGame(store.getLetters());

@@ -107,6 +107,7 @@ function reducer(state, action) {
   * action = { type : "undo" } ||
               { type : "play", letter : string, isFront : boolean, isPlayer : boolean } ||
               { type : "initDict", dict : Dictionary }
+              { type : "challenge", isPlayer : boolean }
   */
  console.log(action);
  switch(action.type) {
@@ -118,8 +119,9 @@ function reducer(state, action) {
             gameHistory : state.gameHistory.slice(0, -1)
           };
   }
+  case "challenge":
   case "play": {
-    if (state.gameHistory.length > 0 && state.gameHistory.at(-1).type === "play" && action.isPlayer === state.gameHistory.at(-1).isPlayer) { // idempotency for React compliance
+    if (state.gameHistory.length > 0 && action.isPlayer === state.gameHistory.at(-1).isPlayer) {
       return state;
     }
     return { ...state,
