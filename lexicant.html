@@ -231,11 +231,20 @@
       const trie = store.getTrie();
       const apps = trie.append().get(store.getLetters());
       const preps = trie.prepend().get(store.getLetters());
-      const index = Math.floor(Math.random() * (apps.length + preps.length));
-      if (index < apps.length) {
-        computerAppend(apps[index]);
+      if (apps.length + preps.length == 0) {
+        updateLettersHistory("pop");
+        completeToWord();
+        store.setMessage(
+          `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`
+        );
+        resetGame(store.getLetters());
       } else {
-        computerPrepend(preps[index - apps.length]);
+        const index = Math.floor(Math.random() * (apps.length + preps.length));
+        if (index < apps.length) {
+          computerAppend(apps[index]);
+        } else {
+          computerPrepend(preps[index - apps.length]);
+        }
       }
     }
 
