@@ -14,6 +14,7 @@
     <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
+    <!-- TODO: rxjs can be removed once we delete the deprecated Store -->
     <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
     <script>
       async function hackilyImportModule(url) {
@@ -251,33 +252,58 @@
     }
 
     function App() {
+      // State management!
+      // Deprecated state, should be deleted:
+      const { isInitialized, letters, message } = store.useStoreData();
+      // New state:
       const [state, dispatch] = React.useReducer(
         reducer,
         undefined,
         getInitialState,
       );
-      console.log(state);
+
+      // Load the dictionary on app load.
       React.useEffect(() => {
         loadDictionaryNew().then((dictionary) =>
           dispatch({ type: "initDict", dictionary }),
         );
       }, []);
+
+      // Get the computer to make a move whenever the game history changes and it's their turn.
       React.useEffect(() => {
         if (state.dictionary == null) {
           return;
         }
-        console.log("Computer move might be needed!");
+
         if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer) {
-          // && !(state.gameHistory.at(-1).type === "challenge")) {
-          console.log(getLetters(state));
           setTimeout(() => dispatch(getComputerMove(state)), 1000);
         }
       }, [state.gameHistory]);
-      const { isInitialized, letters, message } = store.useStoreData();
+
+      // Input refs:
+      const prependInputRef = React.useRef();
+      const appendInputRef = React.useRef();
 
       if (!isInitialized) {
         return <div>Loading dictionary...</div>;
       }
+
+      const onReceiveText = (ev, isPrepend) => {
+        const letter = ev.target.value.toLowerCase();
+        if (letter === " ") {
+          (isPrepend ? appendInputRef : prependInputRef).current.focus();
+          return;
+        }
+
+        if (/^[a-z]$/.test(letter)) {
+          dispatch({
+            type: "play",
+            letter,
+            isFront: isPrepend,
+            isPlayer: true,
+          });
+        }
+      };
 
       return (
         <div>
@@ -290,7 +316,6 @@
               className="gameBoardLetter"
               value=""
               onChange={(ev) => updateLetters("front", event.target.value)}
-              autoFocus
             />
             {Array.from(letters).map((letter, index) => (
               <div key={index} className="gameBoardLetter">
@@ -308,36 +333,22 @@
           </div>
           <div className="gameBoard">
             <input
-              id="prepend"
+              ref={prependInputRef}
               type="text"
               maxLength={1}
               className="gameBoardLetter"
               value=""
-              onChange={(ev) =>
-                dispatch({
-                  type: "play",
-                  letter: ev.target.value,
-                  isFront: true,
-                  isPlayer: true,
-                })
-              }
+              onChange={(ev) => onReceiveText(ev, true)}
               autoFocus
             />
             <Board state={state} dispatch={dispatch} />
             <input
-              id="append"
+              ref={appendInputRef}
               type="text"
               maxLength={1}
               className="gameBoardLetter"
               value=""
-              onChange={(ev) =>
-                dispatch({
-                  type: "play",
-                  letter: ev.target.value,
-                  isFront: false,
-                  isPlayer: true,
-                })
-              }
+              onChange={(ev) => onReceiveText(ev, false)}
             />
           </div>
           <div style={{ display: "flex", flexDirection: "row", columnGap: 12 }}>
