@@ -14,8 +14,6 @@
     <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
-    <!-- TODO: rxjs can be removed once we delete the deprecated Store -->
-    <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
     <script>
       async function hackilyImportModule(url) {
         const response = await fetch(url);
@@ -37,29 +35,19 @@
 
     <script src="/flipCoin.js"></script>
     <script src="/LetterBitMapTrie.js"></script>
-    <script src="/Store.js"></script>
+    <script src="/State.js"></script>
   </head>
   <body>
     <div id="main">Loading code...</div>
   </body>
 
   <script type="text/babel">
-    async function loadDictionaryNew() {
+    async function loadDictionary() {
       const response = await fetch("/dictionary.json");
       const dictionaryWordList = await response.json();
       const set = new Set(dictionaryWordList.filter((word) => word.length > 3));
       const trie = new LetterBitMapTrie(set);
       return { set, trie };
-    }
-
-    async function loadDictionary() {
-      const response = await fetch("/dictionary.json");
-      const dictionaryWordList = await response.json();
-      const dictionary = new Set(
-        dictionaryWordList.filter((word) => word.length > 3),
-      );
-      const trie = new LetterBitMapTrie(dictionary);
-      store.setDictionaryAndTrie(dictionary, trie);
     }
 
     function Hints({ margin, state }) {
@@ -109,12 +97,18 @@
       if (state.status === "IN_PROGRESS") {
         return "";
       }
+      const { gameHistory } = state;
       const letters = getLetters(state);
-      if (state.gameHistory.at(-1).type === "respondToChallenge") {
+      if (gameHistory.at(-1).type === "respondToChallenge") {
         return `I was thinking of \"${letters}\"!`;
-      } else if (state.gameHistory.at(-1).type === "declareVictory") {
-          // player gave up
-          return `Good game! I was building towards \"${getLetters(state)}\"!`;
+      } else if (gameHistory.at(-1).type === "declareVictory") {
+          if (gameHistory.at(-1).prepend.length + gameHistory.at(-1).append.length > 0) {
+            // player gave up
+            return `Good game! I was building towards \"${letters}\"!`;
+          } else {
+            // player spelled a word
+            return `I win! \"${letters}\" is a word!`;
+          }
       } else {
         if (state.gameHistory.at(-1).isPlayer) {
           return `You win! Great word \"${letters}\"!`;
@@ -255,10 +249,6 @@
     }
 
     function App() {
-      // State management!
-      // Deprecated state, should be deleted:
-      const { isInitialized, letters, message } = store.useStoreData();
-      // New state:
       const [state, dispatch] = React.useReducer(
         reducer,
         undefined,
@@ -267,14 +257,14 @@
 
       // Load the dictionary on app load.
       React.useEffect(() => {
-        loadDictionaryNew().then((dictionary) =>
+        loadDictionary().then((dictionary) =>
           dispatch({ type: "initDict", dictionary }),
         );
       }, []);
 
       // Get the computer to make a move whenever the game history changes and it's their turn.
       React.useEffect(() => {
-        if (state.dictionary == null) {
+        if (!state.dictionary) {
           return;
         }
 
@@ -283,11 +273,16 @@
         }
       }, [state.gameHistory]);
 
+      // Update the url parameter to reflect the current letter state
+      React.useEffect(() =>
+        updateSequenceInUrl(state)
+      , [state]);
+
       // Input refs:
       const prependInputRef = React.useRef();
       const appendInputRef = React.useRef();
 
-      if (!isInitialized) {
+      if (!state.dictionary) {
         return <div>Loading dictionary...</div>;
       }
 
@@ -313,29 +308,6 @@
           <h1>Lexicant game</h1>
           <div className="gameBoard">
             <input
-              id="prepend"
-              type="text"
-              maxLength={1}
-              className="gameBoardLetter"
-              value=""
-              onChange={(ev) => updateLetters("front", event.target.value)}
-            />
-            {Array.from(letters).map((letter, index) => (
-              <div key={index} className="gameBoardLetter">
-                {letter}
-              </div>
-            ))}
-            <input
-              id="append"
-              type="text"
-              maxLength={1}
-              className="gameBoardLetter"
-              value=""
-              onChange={(ev) => updateLetters("end", event.target.value)}
-            />
-          </div>
-          <div className="gameBoard">
-            <input
               ref={prependInputRef}
               type="text"
               maxLength={1}
@@ -359,10 +331,6 @@
             <button
               onClick={() => {
                 dispatch({ type: "challenge", isPlayer: true });
-                store.setMessage(
-                  `I was thinking of \"${store.getLetters()}\"!`,
-                );
-                resetGame(store.getLetters());
               }}
             >
               Challenge
@@ -404,159 +372,16 @@
       ReactDOM.createRoot(document.getElementById("main")).render(<App />);
     }
 
-    const prepend = document.getElementById("prepend");
-    const append = document.getElementById("append");
-
-    function updateSequenceInUrl() {
+    // TODO why doesn't this do anything
+    function updateSequenceInUrl(state) {
+      console.log("update");
+      console.log(getLetters(state));
       const url = new URL(window.location);
-      url.searchParams.set("sequence", store.getLetters());
-      history.pushState({}, "", url);
+      url.searchParams.set("sequence", getLetters(state));
     }
 
     function undo(dispatch) {
       dispatch({ type: "undo" });
-      updateLettersHistory("pop");
-      updateLettersHistory("pop");
-      updateSequenceInUrl();
-    }
-
-    function updateLettersHistory(mode, char = null) {
-      if (mode === "end") {
-        store.setLettersHistory([...store.getLettersHistory(), [char, false]]);
-        store.setLetters(store.getLetters() + char);
-      } else if (mode === "front") {
-        store.setLettersHistory([...store.getLettersHistory(), [char, true]]);
-        store.setLetters(char + store.getLetters());
-      } else if (mode === "pop") {
-        const arr = store.getLettersHistory().at(-1);
-        store.setLettersHistory(store.getLettersHistory().slice(0, -1));
-        if (arr[1]) {
-          store.setLetters(store.getLetters().slice(1));
-        } else {
-          store.setLetters(store.getLetters().slice(0, -1));
-        }
-      }
-    }
-
-    function updateLetters(mode, char = null) {
-      store.setMessage("");
-      if (char !== null && !char.match(/[a-z]/i)) {
-        if (char === " ") {
-          if (document.activeElement === prepend) {
-            append.focus();
-          } else {
-            prepend.focus();
-          }
-        }
-        return;
-      }
-      char = char.toLowerCase();
-      updateLettersHistory(mode, char);
-      let letters = store.getLetters();
-      if (store.isDictionaryWord(letters)) {
-        store.setMessage(letters + " is in the dictionary, you lost");
-        resetGame(letters);
-      } else {
-        if (
-          new URL(window.location).searchParams.get("difficulty") === "random"
-        ) {
-          makeRandomMove(letters);
-        } else {
-          makeOptimalMove(letters);
-        }
-        letters = store.getLetters();
-        if (store.isDictionaryWord(letters)) {
-          store.setMessage(`Word is ${letters}. Computer loses!`);
-          resetGame(letters);
-        }
-      }
-      updateSequenceInUrl();
-    }
-
-    function makeRandomMove(letters) {
-      const trie = store.getTrie();
-      const apps = trie.append().get(store.getLetters());
-      const preps = trie.prepend().get(store.getLetters());
-      if (apps.length + preps.length == 0) {
-        updateLettersHistory("pop");
-        store.setMessage(
-          `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`,
-        );
-        resetGame(store.getLetters());
-      } else {
-        const index = Math.floor(Math.random() * (apps.length + preps.length));
-        if (index < apps.length) {
-          computerAppend(apps[index]);
-        } else {
-          computerPrepend(preps[index - apps.length]);
-        }
-      }
-    }
-
-    function makeOptimalMove(letters) {
-      let apps = store.getTrie().append().get(letters);
-      let preps = store.getTrie().prepend().get(letters);
-      let winning_appends = apps.filter(
-        (letter) => store.getTrie().perfectPlay(letters + letter) === 1,
-      );
-
-      let winning_prepends = preps.filter(
-        (letter) => store.getTrie().perfectPlay(letter + letters) === 1,
-      );
-      //store.setMessage(preps + "<br>" + apps + "<br>" +
-      //  winning_appends + "<br>" + winning_prepends)
-
-      let safe_appends = apps.filter(
-        (letter) => !store.isDictionaryWord(letters + letter),
-      );
-      let safe_prepends = preps.filter(
-        (letter) => !store.isDictionaryWord(letter + letters),
-      );
-
-      if (
-        winning_appends.length !== 0 &&
-        (winning_prepends.length === 0 || flipCoin())
-      ) {
-        let move = randomChoice(winning_appends);
-        computerAppend(move);
-      } else if (winning_prepends.length !== 0) {
-        let move = randomChoice(winning_prepends);
-        computerPrepend(move);
-      } else if (
-        safe_appends.length !== 0 &&
-        (safe_prepends.length === 0 || flipCoin())
-      ) {
-        let move = randomChoice(safe_appends);
-        computerAppend(move);
-      } else if (safe_prepends.length !== 0) {
-        let move = randomChoice(safe_prepends);
-        computerPrepend(move);
-      } else if (apps.length !== 0 && (preps.length === 0 || flipCoin())) {
-        let move = randomChoice(apps);
-        computerAppend(move);
-      } else if (preps.length !== 0) {
-        let move = randomChoice(preps);
-        computerPrepend(move);
-      } else {
-        updateLettersHistory("pop");
-        store.setMessage(
-          `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`,
-        );
-        resetGame(store.getLetters());
-      }
-    }
-
-    function computerPrepend(letter) {
-      updateLettersHistory("front", letter);
-    }
-
-    function computerAppend(letter) {
-      updateLettersHistory("end", letter);
-    }
-
-    function resetGame(endingWord) {
-      store.addPlayedWord(endingWord);
-      store.resetGame();
     }
 
     function randomChoice(list) {
