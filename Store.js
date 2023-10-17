@@ -114,11 +114,14 @@ function reducer(state, action) {
  console.log(action);
  switch(action.type) {
   case "undo": {
-    if (state.letters.length === 0) {
+    const { gameHistory } = state;
+    if (!gameHistory || gameHistory.length === 0) {
       return state;
     }
+    let i = -1;
+    for (; i <= gameHistory.length && !gameHistory.at(i).isPlayer; i--) {}
     return { ...state,
-            gameHistory : state.gameHistory.slice(0, -1)
+            gameHistory : gameHistory.slice(0, i)
           };
   }
   case "challenge":

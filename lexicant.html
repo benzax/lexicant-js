@@ -276,7 +276,7 @@
               onChange={(ev) => dispatch({ type : "play", letter : ev.target.value, isFront : false, isPlayer : true})}
             />
           </div>
-          <button onClick={undo} style={{ marginRight: 12 }}>
+          <button onClick={() => undo(dispatch)} style={{ marginRight: 12 }}>
             Undo
           </button>
           <button
@@ -312,7 +312,8 @@
       history.pushState({}, "", url);
     }
 
-    function undo() {
+    function undo(dispatch) {
+      dispatch({ type : "undo" });
       updateLettersHistory("pop");
       updateLettersHistory("pop");
       updateSequenceInUrl();
