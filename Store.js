@@ -6,7 +6,10 @@ function getInitialStoreStateFromUrl() {
   const sequenceFromUrl = url.searchParams.get("sequence") ?? "";
   return {
     letters: sequenceFromUrl,
-    lettersHistory: Array.from(sequenceFromUrl).map((letter) => [letter, false]),
+    lettersHistory: Array.from(sequenceFromUrl).map((letter) => [
+      letter,
+      false,
+    ]),
   };
 }
 
@@ -35,13 +38,13 @@ const store = (() => {
 
     setMessage(newMessage) {
       subject.next(
-        immutableUpdate(getSnapshot(), { message: { $set: newMessage } })
+        immutableUpdate(getSnapshot(), { message: { $set: newMessage } }),
       );
     },
 
     setLetters(newLetters) {
       subject.next(
-        immutableUpdate(getSnapshot(), { letters: { $set: newLetters } })
+        immutableUpdate(getSnapshot(), { letters: { $set: newLetters } }),
       );
     },
 
@@ -50,7 +53,7 @@ const store = (() => {
         immutableUpdate(getSnapshot(), {
           letters: { $set: "" },
           lettersHistory: { $set: [] },
-        })
+        }),
       );
     },
 
@@ -58,13 +61,13 @@ const store = (() => {
       subject.next(
         immutableUpdate(getSnapshot(), {
           lettersHistory: { $set: newLettersHistory },
-        })
+        }),
       );
     },
 
     addPlayedWord(word) {
       subject.next(
-        immutableUpdate(getSnapshot(), { playedWords: { $push: [word] } })
+        immutableUpdate(getSnapshot(), { playedWords: { $push: [word] } }),
       );
     },
 
@@ -74,7 +77,7 @@ const store = (() => {
           dictionary: { $set: dictionary },
           trie: { $set: trie },
           isInitialized: { $set: true },
-        })
+        }),
       );
     },
 
@@ -113,85 +116,88 @@ function reducer(state, action) {
               { type : "respondToChallenge", isPlayer : boolean, prepend : string, append : string } ||
               { type : "declareVictory", isPlayer : boolean }
   */
- console.log(action);
- switch(action.type) {
-  case "undo": {
-    const { gameHistory } = state;
-    if (!gameHistory || gameHistory.length === 0) {
-      return state;
+  console.log(action);
+  switch (action.type) {
+    case "undo": {
+      const { gameHistory } = state;
+      if (!gameHistory || gameHistory.length === 0) {
+        return state;
+      }
+      let i = -1;
+      for (; i <= gameHistory.length && !gameHistory.at(i).isPlayer; i--) {}
+      return {
+        ...state,
+        gameHistory: gameHistory.slice(0, i),
+        status: "IN_PROGRESS",
+      };
     }
-    let i = -1;
-    for (; i <= gameHistory.length && !gameHistory.at(i).isPlayer; i--) {}
-    return { ...state,
-            gameHistory : gameHistory.slice(0, i),
-            status : "IN_PROGRESS",
-          };
-  }
-  case "challenge":
-  case "play": {
-    if (state.gameHistory.length > 0 && (action.isPlayer === state.gameHistory.at(-1).isPlayer || state.status === "COMPLETED")) {
-      return state;
+    case "challenge":
+    case "play": {
+      if (
+        state.gameHistory.length > 0 &&
+        (action.isPlayer === state.gameHistory.at(-1).isPlayer ||
+          state.status === "COMPLETED")
+      ) {
+        return state;
+      }
+      return { ...state, gameHistory: [...state.gameHistory, action] };
     }
-    return { ...state,
-            gameHistory : [...state.gameHistory, action ]
-           };
-  }
-  case "respondToChallenge":
-  case "declareVictory": {
-    if (state.status === "COMPLETED") {
-      return state;
+    case "respondToChallenge":
+    case "declareVictory": {
+      if (state.status === "COMPLETED") {
+        return state;
+      }
+      return {
+        ...state,
+        gameHistory: [...state.gameHistory, action],
+        status: "COMPLETED",
+      };
     }
-    return { ...state,
-      gameHistory : [...state.gameHistory, action ],
-      status : "COMPLETED"
-     };
-  }
-  case "reset": {
-    if (state.status === "IN_PROGRESS") {
-      return state;
+    case "reset": {
+      if (state.status === "IN_PROGRESS") {
+        return state;
+      }
+      return {
+        ...state,
+        initialLetters: "",
+        gameHistory: [],
+        status: "IN_PROGRESS",
+        playedWords: [...state.playedWords, getLetters(state)],
+      };
     }
-    return { ...state,
-            initialLetters : "",
-            gameHistory : [],
-            status : "IN_PROGRESS",
-            playedWords : [...state.playedWords, getLetters(state)]
-          };
-  }
-  case "initDict" : {
-    return { ...state,
-            dictionary : action.dictionary
-          };
+    case "initDict": {
+      return { ...state, dictionary: action.dictionary };
     }
   }
   return state;
-  }
+}
 
-  function getInitialState() {
-    const url = new URL(window.location);
-    const sequenceFromUrl = url.searchParams.get("sequence") ?? "";
-    return {
-      initialLetters : sequenceFromUrl,
-      gameHistory : [],
-      status : "IN_PROGRESS",
-      dictionary : null,
-      playedWords : []
-    };
-  }
+function getInitialState() {
+  const url = new URL(window.location);
+  const sequenceFromUrl = url.searchParams.get("sequence") ?? "";
+  return {
+    initialLetters: sequenceFromUrl,
+    gameHistory: [],
+    status: "IN_PROGRESS",
+    dictionary: null,
+    playedWords: [],
+  };
+}
 
-  function getLetters(state) {
-    let ret = state.initialLetters;
-    for (const action of state.gameHistory) {
-      if (action.type === "respondToChallenge") {
-        ret = action.prepend + ret + action.append;
-      } else if (action.type !== "play") {
-        continue;
+function getLetters(state) {
+  let ret = state.initialLetters;
+  for (const action of state.gameHistory) {
+    if (action.type === "respondToChallenge") {
+      ret = action.prepend + ret + action.append;
+    } else if (action.type !== "play") {
+      continue;
+    } else {
+      if (action.isFront) {
+        ret = action.letter + ret;
       } else {
-        if (action.isFront) {
-          ret = action.letter + ret;
-        } else {
-          ret = ret + action.letter;
-        }
+        ret = ret + action.letter;
       }
     }
-    return ret;
   }
+  return ret;
+}
