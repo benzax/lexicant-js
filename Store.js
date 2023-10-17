@@ -161,12 +161,11 @@ function reducer(state, action) {
   }
 
   function getLetters(state) {
-    let ret = "";
+    let ret = state.initialLetters;
     for (const action of state.gameHistory) {
       if (action.type === "respondToChallenge") {
         ret = action.prepend + ret + action.append;
-      }
-      else if (action.type !== "play") {
+      } else if (action.type !== "play") {
         continue;
       } else {
         if (action.isFront) {
