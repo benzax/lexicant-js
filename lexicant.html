@@ -29,7 +29,7 @@
       let immutableUpdate = null;
       async function loadModules() {
         immutableUpdate = await hackilyImportModule(
-          "https://unpkg.com/immutability-helper@3.1.1/index.js"
+          "https://unpkg.com/immutability-helper@3.1.1/index.js",
         );
       }
     </script>
@@ -45,9 +45,7 @@
     async function loadDictionaryNew() {
       const response = await fetch("/dictionary.json");
       const dictionaryWordList = await response.json();
-      const set = new Set(
-        dictionaryWordList.filter((word) => word.length > 3)
-      );
+      const set = new Set(dictionaryWordList.filter((word) => word.length > 3));
       const trie = new LetterBitMapTrie(set);
       return { set, trie };
     }
@@ -56,7 +54,7 @@
       const response = await fetch("/dictionary.json");
       const dictionaryWordList = await response.json();
       const dictionary = new Set(
-        dictionaryWordList.filter((word) => word.length > 3)
+        dictionaryWordList.filter((word) => word.length > 3),
       );
       const trie = new LetterBitMapTrie(dictionary);
       store.setDictionaryAndTrie(dictionary, trie);
@@ -64,7 +62,7 @@
 
     function Hints({ margin, state }) {
       const [isShown, setIsShown] = React.useState(
-        () => !!new URL(window.location).searchParams.get("hints")
+        () => !!new URL(window.location).searchParams.get("hints"),
       );
 
       if (state.dictionary == null) {
@@ -76,16 +74,14 @@
       const apps = trie.append().get(letters);
       const preps = trie.prepend().get(letters);
       const winning_appends = apps.filter(
-        (letter) => trie.perfectPlay(letters + letter) === 1
+        (letter) => trie.perfectPlay(letters + letter) === 1,
       );
       const winning_prepends = preps.filter(
-        (letter) => trie.perfectPlay(letter + letters) === 1
+        (letter) => trie.perfectPlay(letter + letters) === 1,
       );
-      const safe_appends = apps.filter(
-        (letter) => !set.has(letters + letter)
-      );
+      const safe_appends = apps.filter((letter) => !set.has(letters + letter));
       const safe_prepends = preps.filter(
-        (letter) => !set.has(letter + letters)
+        (letter) => !set.has(letter + letters),
       );
 
       return (
@@ -135,22 +131,34 @@
     }
 
     function getComputerMove(state) {
-      if (state.gameHistory.length === 0 || state.gameHistory.at(-1).type === "play") {
+      if (
+        state.gameHistory.length === 0 ||
+        state.gameHistory.at(-1).type === "play"
+      ) {
         if (
-            new URL(window.location).searchParams.get("difficulty") === "random"
-          ) {
-            return getRandomMove(state);
-          } else {
-            return getOptimalMove(state);
-          }
-      } else { // challenge
+          new URL(window.location).searchParams.get("difficulty") === "random"
+        ) {
+          return getRandomMove(state);
+        } else {
+          return getOptimalMove(state);
+        }
+      } else {
+        // challenge
         const { set, trie } = state.dictionary;
         const letters = getLetters(state);
         let [prep, app] = ["", ""];
-        while (prep.length + app.length < 40 && !set.has(prep + letters + app)) {
+        while (
+          prep.length + app.length < 40 &&
+          !set.has(prep + letters + app)
+        ) {
           const action = getRandomValidMove(prep + letters + app, trie);
           if (!action) {
-            return { type : "respondToChallenge", isPlayer : false, prepend : "", append : "" };
+            return {
+              type: "respondToChallenge",
+              isPlayer: false,
+              prepend: "",
+              append: "",
+            };
           }
           if (action.isFront) {
             prep = action.letter + prep;
@@ -158,7 +166,12 @@
             app = app + action.letter;
           }
         }
-        return { type : "respondToChallenge", isPlayer : false, prepend : prep, append : app };
+        return {
+          type: "respondToChallenge",
+          isPlayer: false,
+          prepend: prep,
+          append: app,
+        };
       }
     }
 
@@ -169,9 +182,11 @@
     }
 
     function getRandomMove(state) {
-      const letter = String.fromCharCode("a".charCodeAt(0) + Math.floor((Math.random() * 26)));
-      const pos = Math.random() < .5;
-      return { type : "play", letter, isFront : pos, isPlayer : false };
+      const letter = String.fromCharCode(
+        "a".charCodeAt(0) + Math.floor(Math.random() * 26),
+      );
+      const pos = Math.random() < 0.5;
+      return { type: "play", letter, isFront: pos, isPlayer: false };
     }
 
     function getActionBySamplingLists(prepends, appends) {
@@ -181,9 +196,19 @@
       }
       const index = Math.floor(Math.random() * length);
       if (index < prepends.length) {
-        return { type : "play", letter : prepends[index], isFront : true, isPlayer : false };
+        return {
+          type: "play",
+          letter: prepends[index],
+          isFront: true,
+          isPlayer: false,
+        };
       } else {
-        return { type : "play", letter : appends[index - prepends.length], isFront : false, isPlayer : false };
+        return {
+          type: "play",
+          letter: appends[index - prepends.length],
+          isFront: false,
+          isPlayer: false,
+        };
       }
     }
 
@@ -191,50 +216,59 @@
       const { set, trie } = state.dictionary;
       const letters = getLetters(state);
       if (set.has(letters)) {
-        return { type : "declareVictory", isPlayer : false };
+        return { type: "declareVictory", isPlayer: false };
       }
       const apps = trie.append().get(letters);
       const preps = trie.prepend().get(letters);
       const winning_appends = apps.filter(
-        (letter) => trie.perfectPlay(letters + letter) === 1
+        (letter) => trie.perfectPlay(letters + letter) === 1,
       );
       const winning_prepends = preps.filter(
-        (letter) => trie.perfectPlay(letter + letters) === 1
+        (letter) => trie.perfectPlay(letter + letters) === 1,
       );
 
-      const safe_appends = apps.filter(
-        (letter) => !set.has(letters + letter)
-      );
+      const safe_appends = apps.filter((letter) => !set.has(letters + letter));
       const safe_prepends = preps.filter(
-        (letter) => !set.has(letter + letters)
+        (letter) => !set.has(letter + letters),
       );
 
-      return getActionBySamplingLists(winning_prepends, winning_appends) ??
-              getActionBySamplingLists(safe_prepends, safe_appends) ??
-              getActionBySamplingLists(preps, apps) ??
-              { type : "challenge", isPlayer : false };
+      return (
+        getActionBySamplingLists(winning_prepends, winning_appends) ??
+        getActionBySamplingLists(safe_prepends, safe_appends) ??
+        getActionBySamplingLists(preps, apps) ?? {
+          type: "challenge",
+          isPlayer: false,
+        }
+      );
     }
 
     function Board({ state, dispatch }) {
       return Array.from(getLetters(state)).map((letter, index) => (
-                    <div key={index} className="gameBoardLetter">
-                      {letter}
-                    </div>
-                  ));
+        <div key={index} className="gameBoardLetter">
+          {letter}
+        </div>
+      ));
     }
 
     function App() {
-      const [state, dispatch] = React.useReducer(reducer, undefined, getInitialState);
+      const [state, dispatch] = React.useReducer(
+        reducer,
+        undefined,
+        getInitialState,
+      );
       console.log(state);
       React.useEffect(() => {
-        loadDictionaryNew().then(dictionary => dispatch({ type : "initDict", dictionary }));
+        loadDictionaryNew().then((dictionary) =>
+          dispatch({ type: "initDict", dictionary }),
+        );
       }, []);
       React.useEffect(() => {
         if (state.dictionary == null) {
           return;
         }
         console.log("Computer move might be needed!");
-        if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer) { // && !(state.gameHistory.at(-1).type === "challenge")) {
+        if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer) {
+          // && !(state.gameHistory.at(-1).type === "challenge")) {
           console.log(getLetters(state));
           setTimeout(() => dispatch(getComputerMove(state)), 1000);
         }
@@ -279,17 +313,31 @@
               maxLength={1}
               className="gameBoardLetter"
               value=""
-              onChange={(ev) => dispatch({ type : "play", letter : ev.target.value, isFront : true, isPlayer : true})}
+              onChange={(ev) =>
+                dispatch({
+                  type: "play",
+                  letter: ev.target.value,
+                  isFront: true,
+                  isPlayer: true,
+                })
+              }
               autoFocus
             />
-            <Board state={state} dispatch={dispatch}/>
+            <Board state={state} dispatch={dispatch} />
             <input
               id="append"
               type="text"
               maxLength={1}
               className="gameBoardLetter"
               value=""
-              onChange={(ev) => dispatch({ type : "play", letter : ev.target.value, isFront : false, isPlayer : true})}
+              onChange={(ev) =>
+                dispatch({
+                  type: "play",
+                  letter: ev.target.value,
+                  isFront: false,
+                  isPlayer: true,
+                })
+              }
             />
           </div>
           <button onClick={() => undo(dispatch)} style={{ marginRight: 12 }}>
@@ -298,28 +346,30 @@
           <button
             style={{ marginRight: 12 }}
             onClick={function () {
-              dispatch({ type : "challenge", isPlayer : true });
+              dispatch({ type: "challenge", isPlayer: true });
               completeToWord();
               store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
               resetGame(store.getLetters());
-            }
-          }
+            }}
           >
             Challenge
           </button>
           <button
-          style={{ marginRight: 12 }}
-          onClick={() => {
-            dispatch({ type : "declareVictory", isPlayer : true });
-          }}>
+            style={{ marginRight: 12 }}
+            onClick={() => {
+              dispatch({ type: "declareVictory", isPlayer: true });
+            }}
+          >
             Declare Victory
           </button>
-          <button onClick={() => {
-            dispatch({ type : "reset" });
-          }}>
+          <button
+            onClick={() => {
+              dispatch({ type: "reset" });
+            }}
+          >
             Reset
           </button>
-          <Hints margin="12px 0" state={state}/>
+          <Hints margin="12px 0" state={state} />
           <div state={state}>Message: {getMessage(state)}</div>
           <PlayedWords state={state} margin="12px 0" />
         </div>
@@ -343,7 +393,7 @@
     }
 
     function undo(dispatch) {
-      dispatch({ type : "undo" });
+      dispatch({ type: "undo" });
       updateLettersHistory("pop");
       updateLettersHistory("pop");
       updateSequenceInUrl();
@@ -410,7 +460,7 @@
         updateLettersHistory("pop");
         completeToWord();
         store.setMessage(
-          `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`
+          `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`,
         );
         resetGame(store.getLetters());
       } else {
@@ -427,20 +477,20 @@
       let apps = store.getTrie().append().get(letters);
       let preps = store.getTrie().prepend().get(letters);
       let winning_appends = apps.filter(
-        (letter) => store.getTrie().perfectPlay(letters + letter) === 1
+        (letter) => store.getTrie().perfectPlay(letters + letter) === 1,
       );
 
       let winning_prepends = preps.filter(
-        (letter) => store.getTrie().perfectPlay(letter + letters) === 1
+        (letter) => store.getTrie().perfectPlay(letter + letters) === 1,
       );
       //store.setMessage(preps + "<br>" + apps + "<br>" +
       //  winning_appends + "<br>" + winning_prepends)
 
       let safe_appends = apps.filter(
-        (letter) => !store.isDictionaryWord(letters + letter)
+        (letter) => !store.isDictionaryWord(letters + letter),
       );
       let safe_prepends = preps.filter(
-        (letter) => !store.isDictionaryWord(letter + letters)
+        (letter) => !store.isDictionaryWord(letter + letters),
       );
 
       if (
@@ -474,7 +524,7 @@
         updateLettersHistory("pop");
         completeToWord();
         store.setMessage(
-          `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`
+          `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`,
         );
         resetGame(store.getLetters());
       }
