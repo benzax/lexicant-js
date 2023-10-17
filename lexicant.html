@@ -340,35 +340,29 @@
               }
             />
           </div>
-          <button onClick={() => undo(dispatch)} style={{ marginRight: 12 }}>
-            Undo
-          </button>
-          <button
-            style={{ marginRight: 12 }}
-            onClick={function () {
-              dispatch({ type: "challenge", isPlayer: true });
-              completeToWord();
-              store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
-              resetGame(store.getLetters());
-            }}
-          >
-            Challenge
-          </button>
-          <button
-            style={{ marginRight: 12 }}
-            onClick={() => {
-              dispatch({ type: "declareVictory", isPlayer: true });
-            }}
-          >
-            Declare Victory
-          </button>
-          <button
-            onClick={() => {
-              dispatch({ type: "reset" });
-            }}
-          >
-            Reset
-          </button>
+          <div style={{ display: "flex", flexDirection: "row", columnGap: 12 }}>
+            <button onClick={() => undo(dispatch)}>Undo</button>
+            <button
+              onClick={() => {
+                dispatch({ type: "challenge", isPlayer: true });
+                completeToWord();
+                store.setMessage(
+                  `I was thinking of \"${store.getLetters()}\"!`,
+                );
+                resetGame(store.getLetters());
+              }}
+            >
+              Challenge
+            </button>
+            <button
+              onClick={() =>
+                dispatch({ type: "declareVictory", isPlayer: true })
+              }
+            >
+              Declare Victory
+            </button>
+            <button onClick={() => dispatch({ type: "reset" })}>Reset</button>
+          </div>
           <Hints margin="12px 0" state={state} />
           <div state={state}>Message: {getMessage(state)}</div>
           <PlayedWords state={state} margin="12px 0" />
