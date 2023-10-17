@@ -114,7 +114,7 @@ function reducer(state, action) {
               { type : "initDict", dict : Dictionary } ||
               { type : "challenge", isPlayer : boolean } ||
               { type : "respondToChallenge", isPlayer : boolean, prepend : string, append : string } ||
-              { type : "declareVictory", isPlayer : boolean }
+              { type : "declareVictory", isPlayer : boolean, prepend : string, append : string }
   */
   console.log(action);
   switch (action.type) {
@@ -144,7 +144,7 @@ function reducer(state, action) {
     }
     case "respondToChallenge":
     case "declareVictory": {
-      if (state.status === "COMPLETED") {
+      if (state.status === "COMPLETED" || (!state.dictionary.set.has(getLetters(state)) && action.isPlayer)) {
         return state;
       }
       return {
@@ -187,7 +187,7 @@ function getInitialState() {
 function getLetters(state) {
   let ret = state.initialLetters;
   for (const action of state.gameHistory) {
-    if (action.type === "respondToChallenge") {
+    if (action.type === "respondToChallenge" || action.type === "declareVictory") {
       ret = action.prepend + ret + action.append;
     } else if (action.type !== "play") {
       continue;

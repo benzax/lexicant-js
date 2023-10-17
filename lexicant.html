@@ -112,6 +112,9 @@
       const letters = getLetters(state);
       if (state.gameHistory.at(-1).type === "respondToChallenge") {
         return `I was thinking of \"${letters}\"!`;
+      } else if (state.gameHistory.at(-1).type === "declareVictory") {
+          // player gave up
+          return `Good game! I was building towards \"${getLetters(state)}\"!`;
       } else {
         if (state.gameHistory.at(-1).isPlayer) {
           return `You win! Great word \"${letters}\"!`;
@@ -146,28 +149,7 @@
         }
       } else {
         // challenge
-        const { set, trie } = state.dictionary;
-        const letters = getLetters(state);
-        let [prep, app] = ["", ""];
-        while (
-          prep.length + app.length < 40 &&
-          !set.has(prep + letters + app)
-        ) {
-          const action = getRandomValidMove(prep + letters + app, trie);
-          if (!action) {
-            return {
-              type: "respondToChallenge",
-              isPlayer: false,
-              prepend: "",
-              append: "",
-            };
-          }
-          if (action.isFront) {
-            prep = action.letter + prep;
-          } else {
-            app = app + action.letter;
-          }
-        }
+        const [prep, app] = completeToWord(state);
         return {
           type: "respondToChallenge",
           isPlayer: false,
@@ -175,6 +157,27 @@
           append: app,
         };
       }
+    }
+
+    function completeToWord(state) {
+      const { set, trie } = state.dictionary;
+      const letters = getLetters(state);
+      let [prep, app] = ["", ""];
+      while (
+          prep.length + app.length < 40 &&
+          !set.has(prep + letters + app)
+        ) {
+        const action = getRandomValidMove(prep + letters + app, trie);
+        if (!action) {
+          return ["", ""];
+        }
+        if (action.isFront) {
+          prep = action.letter + prep;
+        } else {
+          app = app + action.letter;
+        }
+      }
+      return [prep, app];
     }
 
     function getRandomValidMove(letters, trie) {
@@ -217,7 +220,7 @@
       const { set, trie } = state.dictionary;
       const letters = getLetters(state);
       if (set.has(letters)) {
-        return { type: "declareVictory", isPlayer: false };
+        return { type: "declareVictory", isPlayer: false, prepend: "", append: "" };
       }
       const apps = trie.append().get(letters);
       const preps = trie.prepend().get(letters);
@@ -356,7 +359,6 @@
             <button
               onClick={() => {
                 dispatch({ type: "challenge", isPlayer: true });
-                completeToWord();
                 store.setMessage(
                   `I was thinking of \"${store.getLetters()}\"!`,
                 );
@@ -366,13 +368,27 @@
               Challenge
             </button>
             <button
+              style={{ backgroundColor: "red" }}
+              onClick={() => {
+                const [prep, app] = completeToWord(state);
+                dispatch({ type: "declareVictory", isPlayer: false, prepend: prep, append: app });
+              }}
+            >
+              Give Up
+            </button>
+            <button
+              style={{ backgroundColor: "red" }}
               onClick={() =>
                 dispatch({ type: "declareVictory", isPlayer: true })
               }
             >
               Declare Victory
             </button>
-            <button onClick={() => dispatch({ type: "reset" })}>Reset</button>
+            <button
+              style={{ backgroundColor: "red" }}
+              onClick={() => dispatch({ type: "reset" })}>
+              Reset
+            </button>
           </div>
           <Hints margin="12px 0" state={state} />
           <div state={state}>Message: {getMessage(state)}</div>
@@ -463,7 +479,6 @@
       const preps = trie.prepend().get(store.getLetters());
       if (apps.length + preps.length == 0) {
         updateLettersHistory("pop");
-        completeToWord();
         store.setMessage(
           `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`,
         );
@@ -524,7 +539,6 @@
         computerPrepend(move);
       } else {
         updateLettersHistory("pop");
-        completeToWord();
         store.setMessage(
           `${letters} has no continuations. I thought we we were building towards \"${store.getLetters()}\"!`,
         );
@@ -543,15 +557,6 @@
     function resetGame(endingWord) {
       store.addPlayedWord(endingWord);
       store.resetGame();
-    }
-
-    function completeToWord() {
-      while (
-        !store.isDictionaryWord(store.getLetters()) &&
-        store.getLetters().length < 100
-      ) {
-        makeRandomMove(store.getLetters());
-      }
     }
 
     function randomChoice(list) {
