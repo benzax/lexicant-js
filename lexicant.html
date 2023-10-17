@@ -100,21 +100,20 @@
       const { gameHistory } = state;
       const letters = getLetters(state);
       if (gameHistory.at(-1).type === "respondToChallenge") {
+        // only player challenges for now
         return `I was thinking of \"${letters}\"!`;
-      } else if (gameHistory.at(-1).type === "declareVictory") {
+      } else { // declare victory
           if (gameHistory.at(-1).prepend.length + gameHistory.at(-1).append.length > 0) {
             // player gave up
             return `Good game! I was building towards \"${letters}\"!`;
           } else {
-            // player spelled a word
-            return `I win! \"${letters}\" is a word!`;
+            if (gameHistory.at(-1).isPlayer) {
+              return `You win! Great word \"${letters}\"!`;
+            } else {
+              // player spelled a word
+              return `I win! \"${letters}\" is a word!`;
+            }
           }
-      } else {
-        if (state.gameHistory.at(-1).isPlayer) {
-          return `You win! Great word \"${letters}\"!`;
-        } else {
-          return `I win! \"${letters}\" is a word!`;
-        }
       }
     }
 
@@ -347,7 +346,7 @@
             <button
               style={{ backgroundColor: "red" }}
               onClick={() =>
-                dispatch({ type: "declareVictory", isPlayer: true })
+                dispatch({ type: "declareVictory", isPlayer: true, prepend: "", append: "" })
               }
             >
               Declare Victory
