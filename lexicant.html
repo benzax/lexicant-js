@@ -13,7 +13,7 @@
 
     <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
     <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
     <script>
       async function hackilyImportModule(url) {
@@ -62,27 +62,30 @@
       store.setDictionaryAndTrie(dictionary, trie);
     }
 
-    function Hints({ margin }) {
+    function Hints({ margin, state }) {
       const [isShown, setIsShown] = React.useState(
         () => !!new URL(window.location).searchParams.get("hints")
       );
 
-      const storeData = store.useStoreData();
-      const { trie } = storeData;
+      if (state.dictionary == null) {
+        return null;
+      }
+      const { set, trie } = state.dictionary;
+      const letters = getLetters(state);
 
-      const apps = trie.append().get(storeData.letters);
-      const preps = trie.prepend().get(storeData.letters);
+      const apps = trie.append().get(letters);
+      const preps = trie.prepend().get(letters);
       const winning_appends = apps.filter(
-        (letter) => trie.perfectPlay(storeData.letters + letter) === 1
+        (letter) => trie.perfectPlay(letters + letter) === 1
       );
       const winning_prepends = preps.filter(
-        (letter) => trie.perfectPlay(letter + storeData.letters) === 1
+        (letter) => trie.perfectPlay(letter + letters) === 1
       );
       const safe_appends = apps.filter(
-        (letter) => !store.isDictionaryWord(storeData.letters + letter)
+        (letter) => !set.has(letters + letter)
       );
       const safe_prepends = preps.filter(
-        (letter) => !store.isDictionaryWord(letter + storeData.letters)
+        (letter) => !set.has(letter + letters)
       );
 
       return (
@@ -116,13 +119,37 @@
     }
 
     function getComputerMove(state) {
-      if (
-          new URL(window.location).searchParams.get("difficulty") === "random"
-        ) {
-          return getRandomMove(state);
-        } else {
-          return getOptimalMove(state);
+      if (state.gameHistory.length === 0 || state.gameHistory.at(-1).type === "play") {
+        if (
+            new URL(window.location).searchParams.get("difficulty") === "random"
+          ) {
+            return getRandomMove(state);
+          } else {
+            return getOptimalMove(state);
+          }
+      } else { // challenge
+        const { set, trie } = state.dictionary;
+        const letters = getLetters(state);
+        let [prep, app] = ["", ""];
+        while (prep.length + app.length < 40 && !set.has(prep + letters + app)) {
+          const action = getRandomValidMove(prep + letters + app, trie);
+          if (!action) {
+            return { type : "respondToChallenge", isPlayer : false, prepend : "", append : "" };
+          }
+          if (action.isFront) {
+            prep = action.letter + prep;
+          } else {
+            app = app + action.letter;
+          }
         }
+        return { type : "respondToChallenge", isPlayer : false, prepend : prep, append : app };
+      }
+    }
+
+    function getRandomValidMove(letters, trie) {
+      const preps = trie.prepend().get(letters);
+      const apps = trie.append().get(letters);
+      return getActionBySamplingLists(preps, apps);
     }
 
     function getRandomMove(state) {
@@ -147,6 +174,9 @@
     function getOptimalMove(state) {
       const { set, trie } = state.dictionary;
       const letters = getLetters(state);
+      if (set.has(letters)) {
+        return { type : "declareVictory", isPlayer : false };
+      }
       const apps = trie.append().get(letters);
       const preps = trie.prepend().get(letters);
       const winning_appends = apps.filter(
@@ -188,7 +218,7 @@
           return;
         }
         console.log("Computer move might be needed!");
-        if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer && state.gameHistory.at(-1).type !== "challenge") {
+        if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer) { // && !(state.gameHistory.at(-1).type === "challenge")) {
           console.log(getLetters(state));
           setTimeout(() => dispatch(getComputerMove(state)), 1000);
         }
@@ -259,7 +289,7 @@
           >
             Challenge
           </button>
-          <Hints margin="12px 0" />
+          <Hints margin="12px 0" state={state}/>
           <div>Message: {message}</div>
           <PlayedWords margin="12px 0" />
         </div>

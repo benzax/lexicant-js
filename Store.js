@@ -106,8 +106,10 @@ function reducer(state, action) {
             }
   * action = { type : "undo" } ||
               { type : "play", letter : string, isFront : boolean, isPlayer : boolean } ||
-              { type : "initDict", dict : Dictionary }
-              { type : "challenge", isPlayer : boolean }
+              { type : "initDict", dict : Dictionary } ||
+              { type : "challenge", isPlayer : boolean } ||
+              { type : "respondToChallenge", isPlayer : boolean, prepend : string, append : string } ||
+              { type : "declareVictory", isPlayer : boolean }
   */
  console.log(action);
  switch(action.type) {
@@ -121,12 +123,19 @@ function reducer(state, action) {
   }
   case "challenge":
   case "play": {
-    if (state.gameHistory.length > 0 && action.isPlayer === state.gameHistory.at(-1).isPlayer) {
+    if (state.gameHistory.length > 0 && (action.isPlayer === state.gameHistory.at(-1).isPlayer || state.status === "COMPLETED")) {
       return state;
     }
     return { ...state,
             gameHistory : [...state.gameHistory, action ]
-           }
+           };
+  }
+  case "respondToChallenge":
+  case "declareVictory": {
+    return { ...state,
+      gameHistory : [...state.gameHistory, action ],
+      status : "COMPLETED"
+     };
   }
   case "initDict" : {
     return { ...state,
@@ -151,13 +160,17 @@ function reducer(state, action) {
   function getLetters(state) {
     let ret = "";
     for (const action of state.gameHistory) {
-      if (action.type !== "play") {
-        continue;
+      if (action.type === "respondToChallenge") {
+        ret = action.prepend + ret + action.append;
       }
-      if (action.isFront) {
-        ret = action.letter + ret;
+      else if (action.type !== "play") {
+        continue;
       } else {
-        ret = ret + action.letter;
+        if (action.isFront) {
+          ret = action.letter + ret;
+        } else {
+          ret = ret + action.letter;
+        }
       }
     }
     return ret;
