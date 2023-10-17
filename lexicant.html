@@ -107,8 +107,24 @@
       );
     }
 
-    function PlayedWords({ margin }) {
-      const { playedWords } = store.useStoreData();
+    function getMessage(state) {
+      if (state.status === "IN_PROGRESS") {
+        return "";
+      }
+      const letters = getLetters(state);
+      if (state.gameHistory.at(-1).type === "respondToChallenge") {
+        return `I was thinking of \"${letters}\"!`;
+      } else {
+        if (state.gameHistory.at(-1).isPlayer) {
+          return `You win! Great word \"${letters}\"!`;
+        } else {
+          return `I win! \"${letters}\" is a word!`;
+        }
+      }
+    }
+
+    function PlayedWords({ margin, state }) {
+      const { playedWords } = state;
 
       return (
         <div style={margin ? { margin } : undefined}>
@@ -280,18 +296,32 @@
             Undo
           </button>
           <button
+            style={{ marginRight: 12 }}
             onClick={function () {
               dispatch({ type : "challenge", isPlayer : true });
               completeToWord();
               store.setMessage(`I was thinking of \"${store.getLetters()}\"!`);
               resetGame(store.getLetters());
-            }}
+            }
+          }
           >
             Challenge
           </button>
+          <button
+          style={{ marginRight: 12 }}
+          onClick={() => {
+            dispatch({ type : "declareVictory", isPlayer : true });
+          }}>
+            Declare Victory
+          </button>
+          <button onClick={() => {
+            dispatch({ type : "reset" });
+          }}>
+            Reset
+          </button>
           <Hints margin="12px 0" state={state}/>
-          <div>Message: {message}</div>
-          <PlayedWords margin="12px 0" />
+          <div state={state}>Message: {getMessage(state)}</div>
+          <PlayedWords state={state} margin="12px 0" />
         </div>
       );
     }

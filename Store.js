@@ -102,9 +102,11 @@ function reducer(state, action) {
               initialLetters : string,
               gameHistory : array of Actions,
               status : "IN_PROGRESS" || "COMPLETED",
-              dictionary : Dictionary
+              dictionary : Dictionary,
+              played_words : list
             }
   * action = { type : "undo" } ||
+              { type : "reset" } ||
               { type : "play", letter : string, isFront : boolean, isPlayer : boolean } ||
               { type : "initDict", dict : Dictionary } ||
               { type : "challenge", isPlayer : boolean } ||
@@ -121,7 +123,8 @@ function reducer(state, action) {
     let i = -1;
     for (; i <= gameHistory.length && !gameHistory.at(i).isPlayer; i--) {}
     return { ...state,
-            gameHistory : gameHistory.slice(0, i)
+            gameHistory : gameHistory.slice(0, i),
+            status : "IN_PROGRESS",
           };
   }
   case "challenge":
@@ -135,10 +138,24 @@ function reducer(state, action) {
   }
   case "respondToChallenge":
   case "declareVictory": {
+    if (state.status === "COMPLETED") {
+      return state;
+    }
     return { ...state,
       gameHistory : [...state.gameHistory, action ],
       status : "COMPLETED"
      };
+  }
+  case "reset": {
+    if (state.status === "IN_PROGRESS") {
+      return state;
+    }
+    return { ...state,
+            initialLetters : "",
+            gameHistory : [],
+            status : "IN_PROGRESS",
+            playedWords : [...state.playedWords, getLetters(state)]
+          };
   }
   case "initDict" : {
     return { ...state,
@@ -157,6 +174,7 @@ function reducer(state, action) {
       gameHistory : [],
       status : "IN_PROGRESS",
       dictionary : null,
+      playedWords : []
     };
   }
 
