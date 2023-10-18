@@ -128,6 +128,22 @@
       );
     }
 
+    function ChallengeStatus(state) {
+      if (state.gameHistory == null || state.gameHistory.length === 0 || state.gameHistory.at(-1).type !== "challenge") {
+        return (
+          <div>
+            No challenge active
+          </div>
+        );
+      } else {
+        return (
+          <div>
+            You're being challenged!
+          </div>
+        );
+      }
+    }
+
     function getComputerMove(state) {
       if (
         state.gameHistory.length === 0 ||
@@ -360,6 +376,7 @@
           <Hints margin="12px 0" state={state} />
           <div state={state}>Message: {getMessage(state)}</div>
           <PlayedWords state={state} margin="12px 0" />
+          <ChallengeStatus gameHistory={state.gameHistory} margin="12px 0" />
         </div>
       );
     }
