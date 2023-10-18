@@ -371,12 +371,10 @@
       ReactDOM.createRoot(document.getElementById("main")).render(<App />);
     }
 
-    // TODO why doesn't this do anything
     function updateSequenceInUrl(state) {
-      console.log("update");
-      console.log(getLetters(state));
       const url = new URL(window.location);
       url.searchParams.set("sequence", getLetters(state));
+      history.pushState({}, "", url);
     }
 
     function undo(dispatch) {
