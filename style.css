@@ -58,3 +58,16 @@ input[type="text"].gameBoardLetter {
 pre {
   font-family: "Inconsolata", monospace;
 }
+
+.fadeIn {
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
