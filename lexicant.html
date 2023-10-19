@@ -109,7 +109,7 @@
           }
         } else {
           if (state.dictionary.set.has(letters)) {
-            return `I was thinking of \"${letters}\"!`;
+            return `I win! I was thinking of \"${letters}\"!`;
           } else {
             // difficult to reach as of yet
             return `You're right! \"${letters}\" isn't a word!`;
@@ -124,8 +124,12 @@
           if (gameHistory.at(-1).isPlayer) {
             return `You win! Great word \"${letters}\"!`;
           } else {
-            // player spelled a word
-            return `I win! \"${letters}\" is a word!`;
+            if (state.dictionary.set.has(letters)) {
+              // player spelled a word
+              return `I win! \"${letters}\" is a word!`;
+            } else {
+              return `Good game!`;
+            }
           }
         }
       }
@@ -148,7 +152,7 @@
         state.gameHistory.at(-1).type !== "challenge" ||
         state.gameHistory.at(-1).isPlayer
       ) {
-        return <div>No challenge active</div>;
+        return <div></div>;
       } else {
         return <div>You're being challenged!</div>;
       }
@@ -381,7 +385,6 @@
               Challenge
             </button>
             <button
-              style={{ backgroundColor: "red" }}
               onClick={() => {
                 const [prep, app] = completeToWord(state);
                 dispatch({
@@ -394,18 +397,27 @@
             >
               Give Up
             </button>
-            <button
-              style={{ backgroundColor: "red" }}
-              onClick={() => dispatch({ type: "reset" })}
-            >
-              Reset
-            </button>
+            <PlayAgain state={state} dispatch={dispatch} />
           </div>
           <Hints margin="12px 0" state={state} />
           <div state={state}>Message: {getMessage(state)}</div>
           <PlayedWords state={state} margin="12px 0" />
           <ChallengeStatus state={state} margin="12px 0" />
         </div>
+      );
+    }
+
+    function PlayAgain({ state, dispatch }) {
+      if (state.status === "IN_PROGRESS") {
+        return <div></div>;
+      }
+      return (
+        <button
+          style={{ backgroundColor: "red" }}
+          onClick={() => dispatch({ type: "reset" })}
+        >
+          Play again
+        </button>
       );
     }
 
