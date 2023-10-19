@@ -347,15 +347,16 @@
         <div>
           <h1>Lexicant game</h1>
           <div className="gameBoard">
-            <input
-              ref={prependInputRef}
-              type="text"
-              maxLength={1}
-              className="gameBoardLetter"
-              value=""
-              onChange={(ev) => onReceiveText(ev, true)}
-              autoFocus
-            />
+            {getLetters(state).length > 0 && (
+              <input
+                ref={prependInputRef}
+                type="text"
+                maxLength={1}
+                className="gameBoardLetter"
+                value=""
+                onChange={(ev) => onReceiveText(ev, true)}
+              />
+            )}
             <Board state={state} dispatch={dispatch} />
             <input
               ref={appendInputRef}
@@ -364,6 +365,7 @@
               className="gameBoardLetter"
               value=""
               onChange={(ev) => onReceiveText(ev, false)}
+              autoFocus
             />
           </div>
           <div style={{ display: "flex", flexDirection: "row", columnGap: 12 }}>
