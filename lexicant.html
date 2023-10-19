@@ -112,7 +112,7 @@
             return `I win! I was thinking of \"${letters}\"!`;
           } else {
             // difficult to reach as of yet
-            return `You're right! \"${letters}\" isn't a word!`;
+            return `You're right! \"${letters}\" isn't a word fragment!`;
           }
         }
       } else {
@@ -158,17 +158,30 @@
       }
     }
 
-    function getComputerMove(state) {
+    function getComputerMove(state, opponent) {
       if (
         state.gameHistory.length === 0 ||
         state.gameHistory.at(-1).type === "play"
       ) {
-        if (
-          new URL(window.location).searchParams.get("difficulty") === "random"
-        ) {
-          return getRandomMove(state);
-        } else {
+        if (opponent === "default" || opponent === "Perfect") {
           return getOptimalMove(state);
+        } else if (opponent === "Valid") {
+          if (state.dictionary.set.has(getLetters(state))) {
+            return {
+              type: "declareVictory",
+              isPlayer: false,
+              prepend: "",
+              append: "",
+            };
+          }
+          return (
+            getRandomValidMove(getLetters(state), state.dictionary.trie) || {
+              type: "challenge",
+              isPlayer: false,
+            }
+          );
+        } else {
+          return getRandomMove(state);
         }
       } else {
         const [prep, app] = completeToWord(state);
@@ -285,6 +298,8 @@
         getInitialState,
       );
 
+      const [opponent, setOpponent] = React.useState("default");
+
       // Load the dictionary
       React.useEffect(() => {
         loadDictionary().then((dictionary) =>
@@ -299,7 +314,7 @@
         }
 
         if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer) {
-          setTimeout(() => dispatch(getComputerMove(state)), 1000);
+          setTimeout(() => dispatch(getComputerMove(state, opponent)), 1000);
         }
       }, [state.gameHistory]);
 
@@ -315,13 +330,20 @@
         state.gameHistory.at(-1).type !== "challenge" ||
         state.gameHistory.at(-1).isPlayer
       ) {
-        return <NormalPlay state={state} dispatch={dispatch} />;
+        return (
+          <NormalPlay
+            state={state}
+            dispatch={dispatch}
+            opponent={opponent}
+            setOpponent={setOpponent}
+          />
+        );
       } else {
         return <ChallengePlay state={state} dispatch={dispatch} />;
       }
     }
 
-    function NormalPlay({ state, dispatch }) {
+    function NormalPlay({ state, dispatch, opponent, setOpponent }) {
       // Input refs:
       const prependInputRef = React.useRef();
       const appendInputRef = React.useRef();
@@ -405,7 +427,24 @@
           <div state={state}>Message: {getMessage(state)}</div>
           <PlayedWords state={state} margin="12px 0" />
           <ChallengeStatus state={state} margin="12px 0" />
+          <SelectOpponent opponent={opponent} setOpponent={setOpponent} />
         </div>
+      );
+    }
+
+    function SelectOpponent({ opponent, setOpponent }) {
+      return (
+        <select
+          value={opponent}
+          onChange={(ev) => setOpponent(ev.target.value)}
+        >
+          <option value="default" disabled>
+            Choose your opponent...
+          </option>
+          <option value="Random">Random Randy</option>
+          <option value="Valid">Careful Carter</option>
+          <option value="Perfect">Perfect Percy</option>
+        </select>
       );
     }
 
