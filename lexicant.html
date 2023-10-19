@@ -367,7 +367,7 @@
             />
           </div>
           <div style={{ display: "flex", flexDirection: "row", columnGap: 12 }}>
-            <button onClick={() => undo(dispatch)}>Undo</button>
+            <button onClick={() => dispatch({ type: "undo" })}>Undo</button>
             <button
               onClick={() => {
                 if (state.dictionary.set.has(getLetters(state))) {
@@ -520,10 +520,6 @@
       const url = new URL(window.location);
       url.searchParams.set("sequence", getLetters(state));
       history.pushState({}, "", url);
-    }
-
-    function undo(dispatch) {
-      dispatch({ type: "undo" });
     }
 
     function randomChoice(list) {
