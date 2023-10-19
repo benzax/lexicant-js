@@ -303,7 +303,7 @@
           }
           case "declareVictory":
           case "respondToChallenge": {
-            for (const letter of action.prepend) {
+            for (const letter of reverseString(action.prepend)) {
               letters.unshift(
                 <BoardCell key={letters.length} letter={letter} />,
               );
@@ -596,6 +596,10 @@
 
     function randomChoice(list) {
       return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function reverseString(s) {
+      return [...s].reverse().join("");
     }
 
     window.addEventListener("load", main, { once: true });
