@@ -283,12 +283,39 @@
       );
     }
 
+    function BoardCell({ letter }) {
+      return <div className="gameBoardLetter fadeIn">{letter}</div>;
+    }
+
     function Board({ state, dispatch }) {
-      return Array.from(getLetters(state)).map((letter, index) => (
-        <div key={index} className="gameBoardLetter">
-          {letter}
-        </div>
-      ));
+      const letters = [];
+      for (const letter of state.initialLetters) {
+        letters.push(<BoardCell key={letters.length} letter={letter} />);
+      }
+
+      for (const action of state.gameHistory) {
+        switch (action.type) {
+          case "play": {
+            letters[action.isFront ? "unshift" : "push"](
+              <BoardCell key={letters.length} letter={action.letter} />,
+            );
+            break;
+          }
+          case "declareVictory":
+          case "respondToChallenge": {
+            for (const letter of action.prepend) {
+              letters.unshift(
+                <BoardCell key={letters.length} letter={letter} />,
+              );
+            }
+            for (const letter of action.append) {
+              letters.push(<BoardCell key={letters.length} letter={letter} />);
+            }
+          }
+        }
+      }
+
+      return letters;
     }
 
     function Everything() {
