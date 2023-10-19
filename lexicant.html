@@ -145,7 +145,8 @@
     function ChallengeStatus({ state }) {
       if (
         state.gameHistory.length === 0 ||
-        state.gameHistory.at(-1).type !== "challenge"
+        state.gameHistory.at(-1).type !== "challenge" ||
+        state.gameHistory.at(-1).isPlayer
       ) {
         return <div>No challenge active</div>;
       } else {
@@ -307,7 +308,8 @@
 
       if (
         state.gameHistory.length === 0 ||
-        state.gameHistory.at(-1)?.type !== "challenge"
+        state.gameHistory.at(-1).type !== "challenge" ||
+        state.gameHistory.at(-1).isPlayer
       ) {
         return <NormalPlay state={state} dispatch={dispatch} />;
       } else {
@@ -364,7 +366,16 @@
             <button onClick={() => undo(dispatch)}>Undo</button>
             <button
               onClick={() => {
-                dispatch({ type: "challenge", isPlayer: true });
+                if (state.dictionary.set.has(getLetters(state))) {
+                  dispatch({
+                    type: "declareVictory",
+                    isPlayer: true,
+                    prepend: "",
+                    append: "",
+                  });
+                } else {
+                  dispatch({ type: "challenge", isPlayer: true });
+                }
               }}
             >
               Challenge
@@ -382,19 +393,6 @@
               }}
             >
               Give Up
-            </button>
-            <button
-              style={{ backgroundColor: "red" }}
-              onClick={() =>
-                dispatch({
-                  type: "declareVictory",
-                  isPlayer: true,
-                  prepend: "",
-                  append: "",
-                })
-              }
-            >
-              Declare Victory
             </button>
             <button
               style={{ backgroundColor: "red" }}
