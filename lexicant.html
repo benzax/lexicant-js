@@ -426,8 +426,10 @@
       const prependInputRef = React.useRef();
       const appendInputRef = React.useRef();
 
-      let [prependText, setPrependText] = React.useState("");
-      let [appendText, setAppendText] = React.useState("");
+      const [prependText, setPrependText] = React.useState("");
+      const [appendText, setAppendText] = React.useState("");
+      const sanitizeChallengeText = (s) =>
+        s.toLowerCase().replaceAll(/[^a-z]+/g, "");
 
       const onReceiveText = (ev, isPrepend) => {
         const letter = ev.target.value.toLowerCase();
@@ -455,7 +457,9 @@
               type="text"
               className="gameBoardLetter"
               style={{ width: "auto" }}
-              onChange={(ev) => setPrependText(ev.target.value)}
+              onChange={(ev) =>
+                setPrependText(sanitizeChallengeText(ev.target.value))
+              }
               value={prependText}
               autoFocus
             />
@@ -465,7 +469,9 @@
               type="text"
               className="gameBoardLetter"
               style={{ width: "auto" }}
-              onChange={(ev) => setAppendText(ev.target.value)}
+              onChange={(ev) =>
+                setAppendText(sanitizeChallengeText(ev.target.value))
+              }
               value={appendText}
             />
           </div>
@@ -478,8 +484,6 @@
                   append: appendText,
                   prepend: prependText,
                 });
-                appendText = "";
-                prependText = "";
               }}
             >
               Submit
