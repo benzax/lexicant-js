@@ -128,8 +128,8 @@
       );
     }
 
-    function ChallengeStatus(state) {
-      if (state.gameHistory == null || state.gameHistory.length === 0 || state.gameHistory.at(-1).type !== "challenge") {
+    function ChallengeStatus({state}) {
+      if (state.gameHistory.length === 0 || state.gameHistory.at(-1).type !== "challenge") {
         return (
           <div>
             No challenge active
@@ -263,13 +263,21 @@
       ));
     }
 
-    function App() {
+    function Everything() {
       const [state, dispatch] = React.useReducer(
         reducer,
         undefined,
         getInitialState,
       );
 
+      if (state.gameHistory.length === 0 || state.gameHistory.at(-1)?.type !== "challenge") {
+        return (<App state={state} dispatch={dispatch}/>);
+      } else {
+        return (<div>Banana</div>);
+      }
+    }
+
+    function App({state, dispatch}) {
       // Load the dictionary on app load.
       React.useEffect(() => {
         loadDictionary().then((dictionary) =>
@@ -376,7 +384,7 @@
           <Hints margin="12px 0" state={state} />
           <div state={state}>Message: {getMessage(state)}</div>
           <PlayedWords state={state} margin="12px 0" />
-          <ChallengeStatus gameHistory={state.gameHistory} margin="12px 0" />
+          <ChallengeStatus state={state} margin="12px 0" />
         </div>
       );
     }
@@ -385,7 +393,7 @@
       await loadModules();
       await loadDictionary();
 
-      ReactDOM.createRoot(document.getElementById("main")).render(<App />);
+      ReactDOM.createRoot(document.getElementById("main")).render(<Everything />);
     }
 
     function updateSequenceInUrl(state) {
