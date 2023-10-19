@@ -99,21 +99,35 @@
       }
       const { gameHistory } = state;
       const letters = getLetters(state);
-      if (gameHistory.at(-1).type === "respondToChallenge") {
-        // only player challenges for now
-        return `I was thinking of \"${letters}\"!`;
-      } else { // declare victory
-          if (gameHistory.at(-1).prepend.length + gameHistory.at(-1).append.length > 0) {
-            // player gave up
-            return `Good game! I was building towards \"${letters}\"!`;
+      const action = gameHistory.at(-1);
+      if (action.type === "respondToChallenge") {
+        if (action.isPlayer) {
+          if (state.dictionary.set.has(letters)) {
+            return `You win! Nice word \"${letters}\"`;
           } else {
-            if (gameHistory.at(-1).isPlayer) {
-              return `You win! Great word \"${letters}\"!`;
-            } else {
-              // player spelled a word
-              return `I win! \"${letters}\" is a word!`;
-            }
+            return `Nice try! \"${letters}\" isn't a word!`;
           }
+        } else {
+          if (state.dictionary.set.has(letters)) {
+            return `I was thinking of \"${letters}\"!`;
+          } else {
+            // difficult to reach as of yet
+            return `You're right! \"${letters}\" isn't a word!`;
+          }
+        }
+      } else {
+        // declare victory
+        if (action.prepend.length + action.append.length > 0) {
+          // player gave up
+          return `Good game! I was building towards \"${letters}\"!`;
+        } else {
+          if (gameHistory.at(-1).isPlayer) {
+            return `You win! Great word \"${letters}\"!`;
+          } else {
+            // player spelled a word
+            return `I win! \"${letters}\" is a word!`;
+          }
+        }
       }
     }
 
@@ -128,19 +142,14 @@
       );
     }
 
-    function ChallengeStatus({state}) {
-      if (state.gameHistory.length === 0 || state.gameHistory.at(-1).type !== "challenge") {
-        return (
-          <div>
-            No challenge active
-          </div>
-        );
+    function ChallengeStatus({ state }) {
+      if (
+        state.gameHistory.length === 0 ||
+        state.gameHistory.at(-1).type !== "challenge"
+      ) {
+        return <div>No challenge active</div>;
       } else {
-        return (
-          <div>
-            You're being challenged!
-          </div>
-        );
+        return <div>You're being challenged!</div>;
       }
     }
 
@@ -157,7 +166,6 @@
           return getOptimalMove(state);
         }
       } else {
-        // challenge
         const [prep, app] = completeToWord(state);
         return {
           type: "respondToChallenge",
@@ -172,10 +180,7 @@
       const { set, trie } = state.dictionary;
       const letters = getLetters(state);
       let [prep, app] = ["", ""];
-      while (
-          prep.length + app.length < 40 &&
-          !set.has(prep + letters + app)
-        ) {
+      while (prep.length + app.length < 40 && !set.has(prep + letters + app)) {
         const action = getRandomValidMove(prep + letters + app, trie);
         if (!action) {
           return ["", ""];
@@ -229,7 +234,12 @@
       const { set, trie } = state.dictionary;
       const letters = getLetters(state);
       if (set.has(letters)) {
-        return { type: "declareVictory", isPlayer: false, prepend: "", append: "" };
+        return {
+          type: "declareVictory",
+          isPlayer: false,
+          prepend: "",
+          append: "",
+        };
       }
       const apps = trie.append().get(letters);
       const preps = trie.prepend().get(letters);
@@ -270,15 +280,7 @@
         getInitialState,
       );
 
-      if (state.gameHistory.length === 0 || state.gameHistory.at(-1)?.type !== "challenge") {
-        return (<App state={state} dispatch={dispatch}/>);
-      } else {
-        return (<div>Banana</div>);
-      }
-    }
-
-    function App({state, dispatch}) {
-      // Load the dictionary on app load.
+      // Load the dictionary
       React.useEffect(() => {
         loadDictionary().then((dictionary) =>
           dispatch({ type: "initDict", dictionary }),
@@ -297,17 +299,26 @@
       }, [state.gameHistory]);
 
       // Update the url parameter to reflect the current letter state
-      React.useEffect(() =>
-        updateSequenceInUrl(state)
-      , [state]);
-
-      // Input refs:
-      const prependInputRef = React.useRef();
-      const appendInputRef = React.useRef();
+      React.useEffect(() => updateSequenceInUrl(state), [state]);
 
       if (!state.dictionary) {
         return <div>Loading dictionary...</div>;
       }
+
+      if (
+        state.gameHistory.length === 0 ||
+        state.gameHistory.at(-1)?.type !== "challenge"
+      ) {
+        return <NormalPlay state={state} dispatch={dispatch} />;
+      } else {
+        return <ChallengePlay state={state} dispatch={dispatch} />;
+      }
+    }
+
+    function NormalPlay({ state, dispatch }) {
+      // Input refs:
+      const prependInputRef = React.useRef();
+      const appendInputRef = React.useRef();
 
       const onReceiveText = (ev, isPrepend) => {
         const letter = ev.target.value.toLowerCase();
@@ -362,7 +373,12 @@
               style={{ backgroundColor: "red" }}
               onClick={() => {
                 const [prep, app] = completeToWord(state);
-                dispatch({ type: "declareVictory", isPlayer: false, prepend: prep, append: app });
+                dispatch({
+                  type: "declareVictory",
+                  isPlayer: false,
+                  prepend: prep,
+                  append: app,
+                });
               }}
             >
               Give Up
@@ -370,15 +386,107 @@
             <button
               style={{ backgroundColor: "red" }}
               onClick={() =>
-                dispatch({ type: "declareVictory", isPlayer: true, prepend: "", append: "" })
+                dispatch({
+                  type: "declareVictory",
+                  isPlayer: true,
+                  prepend: "",
+                  append: "",
+                })
               }
             >
               Declare Victory
             </button>
             <button
               style={{ backgroundColor: "red" }}
-              onClick={() => dispatch({ type: "reset" })}>
+              onClick={() => dispatch({ type: "reset" })}
+            >
               Reset
+            </button>
+          </div>
+          <Hints margin="12px 0" state={state} />
+          <div state={state}>Message: {getMessage(state)}</div>
+          <PlayedWords state={state} margin="12px 0" />
+          <ChallengeStatus state={state} margin="12px 0" />
+        </div>
+      );
+    }
+
+    function ChallengePlay({ state, dispatch }) {
+      // Input refs:
+      const prependInputRef = React.useRef();
+      const appendInputRef = React.useRef();
+
+      let [prependText, setPrependText] = React.useState("");
+      let [appendText, setAppendText] = React.useState("");
+
+      const onReceiveText = (ev, isPrepend) => {
+        const letter = ev.target.value.toLowerCase();
+        if (letter === " ") {
+          (isPrepend ? appendInputRef : prependInputRef).current.focus();
+          return;
+        }
+
+        if (/^[a-z]$/.test(letter)) {
+          dispatch({
+            type: "play",
+            letter,
+            isFront: isPrepend,
+            isPlayer: true,
+          });
+        }
+      };
+
+      return (
+        <div>
+          <h1>Lexicant game</h1>
+          <div className="gameBoard">
+            <input
+              ref={prependInputRef}
+              type="text"
+              className="gameBoardLetter"
+              style={{ width: "auto" }}
+              onChange={(ev) => setPrependText(ev.target.value)}
+              value={prependText}
+              autoFocus
+            />
+            <Board state={state} dispatch={dispatch} />
+            <input
+              ref={appendInputRef}
+              type="text"
+              className="gameBoardLetter"
+              style={{ width: "auto" }}
+              onChange={(ev) => setAppendText(ev.target.value)}
+              value={appendText}
+            />
+          </div>
+          <div style={{ display: "flex", flexDirection: "row", columnGap: 12 }}>
+            <button
+              onClick={() => {
+                dispatch({
+                  type: "respondToChallenge",
+                  isPlayer: true,
+                  append: appendText,
+                  prepend: prependText,
+                });
+                appendText = "";
+                prependText = "";
+              }}
+            >
+              Submit
+            </button>
+            <button
+              style={{ backgroundColor: "red" }}
+              onClick={() => {
+                const [prep, app] = completeToWord(state);
+                dispatch({
+                  type: "declareVictory",
+                  isPlayer: false,
+                  prepend: prep,
+                  append: app,
+                });
+              }}
+            >
+              Give Up
             </button>
           </div>
           <Hints margin="12px 0" state={state} />
@@ -393,7 +501,9 @@
       await loadModules();
       await loadDictionary();
 
-      ReactDOM.createRoot(document.getElementById("main")).render(<Everything />);
+      ReactDOM.createRoot(document.getElementById("main")).render(
+        <Everything />,
+      );
     }
 
     function updateSequenceInUrl(state) {

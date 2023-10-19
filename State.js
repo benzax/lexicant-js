@@ -41,9 +41,25 @@ function reducer(state, action) {
       }
       return { ...state, gameHistory: [...state.gameHistory, action] };
     }
-    case "respondToChallenge":
+    case "respondToChallenge": {
+      if (
+        state.gameHistory.length === 0 ||
+        state.gameHistory.at(-1).type !== "challenge" ||
+        state.gameHistory.at(-1).isPlayer === action.isPlayer
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        gameHistory: [...state.gameHistory, action],
+        status: "COMPLETED",
+      };
+    }
     case "declareVictory": {
-      if (state.status === "COMPLETED" || (!state.dictionary.set.has(getLetters(state)) && action.isPlayer)) {
+      if (
+        state.status === "COMPLETED" ||
+        (!state.dictionary.set.has(getLetters(state)) && action.isPlayer)
+      ) {
         return state;
       }
       return {
@@ -85,8 +101,12 @@ function getInitialState() {
 
 function getLetters(state) {
   let ret = state.initialLetters;
+  console.log(state.gameHistory);
   for (const action of state.gameHistory) {
-    if (action.type === "respondToChallenge" || action.type === "declareVictory") {
+    if (
+      action.type === "respondToChallenge" ||
+      action.type === "declareVictory"
+    ) {
       ret = action.prepend + ret + action.append;
     } else if (action.type !== "play") {
       continue;
@@ -98,5 +118,6 @@ function getLetters(state) {
       }
     }
   }
+  console.log(ret);
   return ret;
 }
