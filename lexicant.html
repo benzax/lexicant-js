@@ -18,24 +18,9 @@
     <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
-    <script>
-      async function hackilyImportModule(url) {
-        const response = await fetch(url);
-        const text = await response.text();
 
-        const exports = {};
-        const module = {};
-        eval(text);
-        return exports.default;
-      }
-
-      let immutableUpdate = null;
-      async function loadModules() {
-        immutableUpdate = await hackilyImportModule(
-          "https://unpkg.com/immutability-helper@3.1.1/index.js",
-        );
-      }
-    </script>
+    <!-- These packages don't have a UMD available so we made our own. -->
+    <script src="/immutability-helper.js"></script>
 
     <script src="/flipCoin.js"></script>
     <script src="/LetterBitMapTrie.js"></script>
@@ -727,14 +712,6 @@
       );
     }
 
-    async function main() {
-      await loadModules();
-
-      ReactDOM.createRoot(document.getElementById("main")).render(
-        <Everything />,
-      );
-    }
-
     function updateSequenceInUrl(state) {
       const url = new URL(window.location);
       url.searchParams.set("sequence", getLetters(state));
@@ -747,6 +724,12 @@
 
     function reverseString(s) {
       return [...s].reverse().join("");
+    }
+
+    function main() {
+      ReactDOM.createRoot(document.getElementById("main")).render(
+        <Everything />,
+      );
     }
 
     window.addEventListener("load", main, { once: true });
