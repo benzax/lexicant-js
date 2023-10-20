@@ -20,6 +20,7 @@
     <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
 
     <!-- These packages don't have a UMD available so we made our own. -->
+    <script src="/color.js"></script>
     <script src="/immutability-helper.js"></script>
 
     <script src="/flipCoin.js"></script>
@@ -376,7 +377,7 @@
       const style =
         movesAgo == null || isPlayer == null
           ? null
-          : { color: isPlayer ? "blue" : "red" };
+          : { color: color(isPlayer ? "blue" : "red").toString() };
       return (
         <div className="gameBoardLetter fadeIn" style={style}>
           {letter}

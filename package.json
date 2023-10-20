@@ -2,11 +2,12 @@
   "name": "lexicant-js",
   "version": "0.0.1",
   "scripts": {
-    "build-umds": "webpack --config module_shims/immutability-helper/webpack.config.js",
+    "build-umds": "ls module_shims/**/webpack.config.js | xargs -n1 webpack --config",
     "format": "prettier --write .",
     "prepare": "husky install"
   },
   "dependencies": {
+    "color": "4.2.3",
     "immutability-helper": "3.1.1"
   },
   "devDependencies": {
