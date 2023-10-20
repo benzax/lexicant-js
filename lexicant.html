@@ -377,7 +377,15 @@
       const style =
         movesAgo == null || isPlayer == null
           ? null
-          : { color: color(isPlayer ? "blue" : "red").toString() };
+          : {
+              color: Color(isPlayer ? "blue" : "red")
+                .mix(
+                  Color("midnightblue"),
+                  // Drop-offs
+                  [0, 0.2, 0.5][movesAgo] ?? 1,
+                )
+                .toString(),
+            };
       return (
         <div className="gameBoardLetter fadeIn" style={style}>
           {letter}
@@ -398,7 +406,8 @@
         );
       }
 
-      let movesAgo;
+      let playerMovesAgo;
+      let computerMovesAgo;
 
       const handleSingleLetterAction = (action) =>
         letters[action.isFront ? "unshift" : "push"](
@@ -406,11 +415,13 @@
             key={letters.length}
             letter={action.letter}
             isPlayer={action.isPlayer}
-            movesAgo={--movesAgo}
+            movesAgo={action.isPlayer ? --playerMovesAgo : --computerMovesAgo}
           />,
         );
       const handleMultiLetterAction = (action) => {
-        --movesAgo;
+        const movesAgo = action.isPlayer
+          ? --playerMovesAgo
+          : --computerMovesAgo;
 
         for (const letter of reverseString(action.prepend)) {
           letters.unshift(
@@ -443,7 +454,10 @@
       const relevantActions = state.gameHistory.filter(
         (action) => actionHandlers[action.type],
       );
-      movesAgo = relevantActions.length;
+      playerMovesAgo = relevantActions.filter(
+        (action) => action.isPlayer,
+      ).length;
+      computerMovesAgo = relevantActions.length - playerMovesAgo;
 
       for (const action of relevantActions) {
         actionHandlers[action.type](action);
