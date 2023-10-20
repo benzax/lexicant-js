@@ -1,1 +1,1 @@
-global.color = require("color");
+global.Color = require("color");

@@ -4,7 +4,8 @@
   "scripts": {
     "build-umds": "ls module_shims/**/webpack.config.js | xargs -n1 webpack --config",
     "format": "prettier --write .",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "start": "python3 -m http.server 9000"
   },
   "dependencies": {
     "color": "4.2.3",

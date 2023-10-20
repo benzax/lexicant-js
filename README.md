@@ -2,7 +2,9 @@
 
 run a local server with e.g.
 
-python3 -m http.server 9000
+```
+npm run start
+```
 
 then load
 
