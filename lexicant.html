@@ -165,7 +165,7 @@
       ) {
         if (opponent === "default" || opponent === "Perfect") {
           return getOptimalMove(state);
-        } else if (opponent === "Valid") {
+        } else if (opponent === "Careful") {
           if (state.dictionary.set.has(getLetters(state))) {
             return {
               type: "declareVictory",
@@ -175,7 +175,7 @@
             };
           }
           return (
-            getRandomValidMove(getLetters(state), state.dictionary.trie) || {
+            getCarefulMove(state) || {
               type: "challenge",
               isPlayer: false,
             }
@@ -216,6 +216,23 @@
       const preps = trie.prepend().get(letters);
       const apps = trie.append().get(letters);
       return getActionBySamplingLists(preps, apps);
+    }
+
+    function getCarefulMove(state) {
+      const letters = getLetters(state);
+      const { set, trie } = state.dictionary;
+      const preps = trie.prepend().get(letters);
+      const apps = trie.append().get(letters);
+
+      const ongoingPreps = preps.filter((letter) => !set.has(letter + letters));
+      const ongoingApps = apps.filter((letter) => !set.has(letters + letter));
+      const terminalPreps = preps.filter((letter) => set.has(letter + letters));
+      const terminalApps = apps.filter((letter) => set.has(letters + letter));
+
+      return (
+        getActionBySamplingLists(ongoingPreps, ongoingApps) ??
+        getActionBySamplingLists(terminalPreps, terminalApps)
+      );
     }
 
     function getRandomMove(state) {
@@ -469,7 +486,7 @@
             Choose your opponent...
           </option>
           <option value="Random">Random Randy</option>
-          <option value="Valid">Careful Carter</option>
+          <option value="Careful">Careful Carter</option>
           <option value="Perfect">Perfect Percy</option>
         </select>
       );
