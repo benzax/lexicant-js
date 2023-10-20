@@ -305,8 +305,15 @@
     }
 
     function BoardCell({ letter, isPlayer, movesAgo }) {
-      console.log({ letter, isPlayer, movesAgo });
-      return <div className="gameBoardLetter fadeIn">{letter}</div>;
+      const style =
+        movesAgo == null || isPlayer == null
+          ? null
+          : { color: isPlayer ? "blue" : "red" };
+      return (
+        <div className="gameBoardLetter fadeIn" style={style}>
+          {letter}
+        </div>
+      );
     }
 
     function Board({ state, dispatch }) {
@@ -316,7 +323,7 @@
           <BoardCell
             key={letters.length}
             letter={letter}
-            isPlayer={false}
+            isPlayer={null}
             movesAgo={null}
           />,
         );
