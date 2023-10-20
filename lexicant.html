@@ -335,6 +335,11 @@
           prepend: "",
           append: "",
         };
+      } else if (getRandomValidMove(letters, trie) == null) {
+        return {
+          type: "challenge",
+          isPlayer: false,
+        };
       }
       if (letters.length < 2) {
         return getRandomValidMove(letters, trie);
