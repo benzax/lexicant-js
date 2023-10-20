@@ -51,7 +51,26 @@
       const dictionaryWordList = await response.json();
       const set = new Set(dictionaryWordList.filter((word) => word.length > 3));
       const trie = new LetterBitMapTrie(set);
-      return { set, trie };
+      const trigrams = computeTrigrams(set);
+      return { set, trie, trigrams };
+    }
+
+    function computeTrigrams(words) {
+      const trigrams = {};
+      const alphabet = "abcdefghijklmnopqrstuvwxyz";
+      for (const x of alphabet) {
+        for (const y of alphabet) {
+          for (const z of alphabet) {
+            trigrams[x + y + z] = 0;
+          }
+        }
+      }
+      for (const word of words) {
+        for (let i = 0; i + 2 < word.length; i++) {
+          trigrams[word.slice(i, i + 3)]++;
+        }
+      }
+      return trigrams;
     }
 
     function Hints({ margin, state }) {
@@ -62,7 +81,7 @@
       if (state.dictionary == null) {
         return null;
       }
-      const { set, trie } = state.dictionary;
+      const { set, trie, trigrams } = state.dictionary;
       const letters = getLetters(state);
 
       const apps = trie.append().get(letters);
@@ -169,6 +188,8 @@
       ) {
         if (opponent === "default" || opponent === "Perfect") {
           return getOptimalMove(state);
+        } else if (opponent === "Trigram") {
+          return getSmallLanguageModelMove(state);
         } else if (opponent === "Careful") {
           if (state.dictionary.set.has(getLetters(state))) {
             return {
@@ -199,7 +220,7 @@
     }
 
     function completeToWord(state) {
-      const { set, trie } = state.dictionary;
+      const { set, trie, trigrams } = state.dictionary;
       const letters = getLetters(state);
       let [prep, app] = ["", ""];
       while (prep.length + app.length < 40 && !set.has(prep + letters + app)) {
@@ -270,7 +291,7 @@
     }
 
     function getOptimalMove(state) {
-      const { set, trie } = state.dictionary;
+      const { set, trie, trigrams } = state.dictionary;
       const letters = getLetters(state);
       if (set.has(letters)) {
         return {
@@ -302,6 +323,63 @@
           isPlayer: false,
         }
       );
+    }
+
+    function getSmallLanguageModelMove(state) {
+      const { set, trie, trigrams } = state.dictionary;
+      const letters = getLetters(state);
+      if (set.has(letters)) {
+        return {
+          type: "declareVictory",
+          isPlayer: false,
+          prepend: "",
+          append: "",
+        };
+      }
+      if (letters.length < 2) {
+        return getRandomValidMove(letters, trie);
+      }
+      if (
+        letters.length > 2 &&
+        (trigrams[letters.slice(0, 3)] === 0 ||
+          trigrams[letters.slice(-3)] === 0)
+      ) {
+        return { type: "challenge", isPlayer: false };
+      }
+
+      const alphabet = "abcdefghijklmnopqrstuvwxyz";
+      let numerator = 0;
+      const first_two = letters.slice(0, 2);
+      for (const letter of alphabet) {
+        numerator += trigrams[letter + first_two];
+      }
+      const last_two = letters.slice(-2);
+      for (const letter of alphabet) {
+        numerator += trigrams[last_two + letter];
+      }
+      let denominator = Math.floor(Math.random() * numerator);
+      for (const letter of alphabet) {
+        denominator -= trigrams[letter + first_two];
+        if (denominator <= 0) {
+          return {
+            type: "play",
+            letter: letter,
+            isFront: true,
+            isPlayer: false,
+          };
+        }
+      }
+      for (const letter of alphabet) {
+        denominator -= trigrams[last_two + letter];
+        if (denominator <= 0) {
+          return {
+            type: "play",
+            letter: letter,
+            isFront: false,
+            isPlayer: false,
+          };
+        }
+      }
     }
 
     function BoardCell({ letter, isPlayer, movesAgo }) {
@@ -536,6 +614,7 @@
           <option value="Random">Random Randy</option>
           <option value="Careful">Careful Carter</option>
           <option value="Perfect">Perfect Percy</option>
+          <option value="Trigram">Trigram Tracy</option>
         </select>
       );
     }
@@ -646,7 +725,6 @@
 
     async function main() {
       await loadModules();
-      await loadDictionary();
 
       ReactDOM.createRoot(document.getElementById("main")).render(
         <Everything />,
