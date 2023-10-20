@@ -304,36 +304,73 @@
       );
     }
 
-    function BoardCell({ letter }) {
+    function BoardCell({ letter, isPlayer, movesAgo }) {
+      console.log({ letter, isPlayer, movesAgo });
       return <div className="gameBoardLetter fadeIn">{letter}</div>;
     }
 
     function Board({ state, dispatch }) {
       const letters = [];
       for (const letter of state.initialLetters) {
-        letters.push(<BoardCell key={letters.length} letter={letter} />);
+        letters.push(
+          <BoardCell
+            key={letters.length}
+            letter={letter}
+            isPlayer={false}
+            movesAgo={null}
+          />,
+        );
       }
 
-      for (const action of state.gameHistory) {
-        switch (action.type) {
-          case "play": {
-            letters[action.isFront ? "unshift" : "push"](
-              <BoardCell key={letters.length} letter={action.letter} />,
-            );
-            break;
-          }
-          case "declareVictory":
-          case "respondToChallenge": {
-            for (const letter of reverseString(action.prepend)) {
-              letters.unshift(
-                <BoardCell key={letters.length} letter={letter} />,
-              );
-            }
-            for (const letter of action.append) {
-              letters.push(<BoardCell key={letters.length} letter={letter} />);
-            }
-          }
+      let movesAgo;
+
+      const handleSingleLetterAction = (action) =>
+        letters[action.isFront ? "unshift" : "push"](
+          <BoardCell
+            key={letters.length}
+            letter={action.letter}
+            isPlayer={action.isPlayer}
+            movesAgo={--movesAgo}
+          />,
+        );
+      const handleMultiLetterAction = (action) => {
+        --movesAgo;
+
+        for (const letter of reverseString(action.prepend)) {
+          letters.unshift(
+            <BoardCell
+              key={letters.length}
+              letter={letter}
+              isPlayer={action.isPlayer}
+              movesAgo={movesAgo}
+            />,
+          );
         }
+        for (const letter of action.append) {
+          letters.push(
+            <BoardCell
+              key={letters.length}
+              letter={letter}
+              isPlayer={action.isPlayer}
+              movesAgo={movesAgo}
+            />,
+          );
+        }
+      };
+
+      const actionHandlers = {
+        play: handleSingleLetterAction,
+        declareVictory: handleMultiLetterAction,
+        respondToChallenge: handleMultiLetterAction,
+      };
+
+      const relevantActions = state.gameHistory.filter(
+        (action) => actionHandlers[action.type],
+      );
+      movesAgo = relevantActions.length;
+
+      for (const action of relevantActions) {
+        actionHandlers[action.type](action);
       }
 
       return letters;
