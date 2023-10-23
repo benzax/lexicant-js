@@ -38,27 +38,29 @@
       const dictionaryWordList = await response.json();
       const set = new Set(dictionaryWordList.filter((word) => word.length > 3));
       const trie = new LetterBitMapTrie(set);
-      const trigrams = computeTrigrams(set);
+      const ngrams = computeNGrams(set);
       const bk_tree = new BKTree(set);
-      return { set, trie, trigrams, bk_tree };
+      return { set, trie, ngrams, bk_tree };
     }
 
-    function computeTrigrams(words) {
-      const trigrams = {};
+    function computeNGrams(words) {
+      const ngrams = {};
       const alphabet = "abcdefghijklmnopqrstuvwxyz";
-      for (const x of alphabet) {
-        for (const y of alphabet) {
-          for (const z of alphabet) {
-            trigrams[x + y + z] = 0;
+      for (const w of alphabet) {
+        for (const x of alphabet) {
+          for (const y of alphabet) {
+            for (const z of alphabet) {
+              ngrams[w + x + y + z] = 0;
+            }
           }
         }
       }
       for (const word of words) {
-        for (let i = 0; i + 2 < word.length; i++) {
-          trigrams[word.slice(i, i + 3)]++;
+        for (let i = 0; i + 3 < word.length; i++) {
+          ngrams[word.slice(i, i + 4)]++;
         }
       }
-      return trigrams;
+      return ngrams;
     }
 
     function Hints({ margin, state }) {
@@ -320,7 +322,7 @@
     }
 
     function getSmallLanguageModelMove(state) {
-      const { set, trie, trigrams } = state.dictionary;
+      const { set, trie, ngrams } = state.dictionary;
       const letters = getLetters(state);
       if (set.has(letters)) {
         return {
@@ -335,31 +337,25 @@
           isPlayer: false,
         };
       }
-      if (letters.length < 2) {
+      if (letters.length < 3) {
         return getRandomValidMove(letters, trie);
-      }
-      if (
-        letters.length > 2 &&
-        (trigrams[letters.slice(0, 3)] === 0 ||
-          trigrams[letters.slice(-3)] === 0)
-      ) {
-        return { type: "challenge", isPlayer: false };
       }
 
       const alphabet = "abcdefghijklmnopqrstuvwxyz";
-      let numerator = 0;
-      const first_two = letters.slice(0, 2);
+      let total = 0;
+      const first_three = letters.slice(0, 3);
       for (const letter of alphabet) {
-        numerator += trigrams[letter + first_two];
+        total += ngrams[letter + first_three];
       }
-      const last_two = letters.slice(-2);
+      const last_three = letters.slice(-3);
       for (const letter of alphabet) {
-        numerator += trigrams[last_two + letter];
+        total += ngrams[last_three + letter];
       }
-      let denominator = Math.floor(Math.random() * numerator);
+      let threshold = Math.random() * total;
+      let accumulator = 0;
       for (const letter of alphabet) {
-        denominator -= trigrams[letter + first_two];
-        if (denominator <= 0) {
+        accumulator += ngrams[letter + first_three];
+        if (accumulator >= threshold) {
           return {
             type: "play",
             letter: letter,
@@ -369,8 +365,8 @@
         }
       }
       for (const letter of alphabet) {
-        denominator -= trigrams[last_two + letter];
-        if (denominator <= 0) {
+        accumulator += ngrams[last_three + letter];
+        if (accumulator >= threshold) {
           return {
             type: "play",
             letter: letter,
