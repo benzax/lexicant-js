@@ -184,7 +184,7 @@
       ) {
         if (opponent === "Perfect") {
           return getOptimalMove(state);
-        } else if (opponent === "default" || opponent === "Trigram") {
+        } else if (opponent === "Trigram") {
           return getSmallLanguageModelMove(state);
         } else if (opponent === "Careful") {
           if (state.dictionary.set.has(getLetters(state))) {
@@ -613,18 +613,21 @@
 
     function SelectOpponent({ opponent, setOpponent }) {
       return (
-        <select
-          value={opponent}
-          onChange={(ev) => setOpponent(ev.target.value)}
-        >
-          <option value="default" disabled>
+        <div>
+          <span>
             Choose your opponent...
-          </option>
-          <option value="Random">Random Randi</option>
-          <option value="Careful">Careful Carter</option>
-          <option value="Perfect">Perfect Percy</option>
-          <option value="Trigram">Trigram Tracy</option>
-        </select>
+            <br />
+          </span>
+          <select
+            defaultValue={"Trigram"}
+            onChange={(ev) => setOpponent(ev.target.value)}
+          >
+            <option value="Random">Random Randi</option>
+            <option value="Careful">Careful Carter</option>
+            <option value="Perfect">Perfect Percy</option>
+            <option value="Trigram">Trigram Tracy</option>
+          </select>
+        </div>
       );
     }
 
