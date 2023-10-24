@@ -182,7 +182,7 @@
         state.gameHistory.length === 0 ||
         state.gameHistory.at(-1).type === "play"
       ) {
-        if (opponent === "default" || opponent === "Perfect") {
+        if (opponent === "Perfect") {
           return getOptimalMove(state);
         } else if (opponent === "default" || opponent === "Trigram") {
           return getSmallLanguageModelMove(state);
