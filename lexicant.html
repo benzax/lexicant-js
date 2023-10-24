@@ -184,7 +184,7 @@
       ) {
         if (opponent === "default" || opponent === "Perfect") {
           return getOptimalMove(state);
-        } else if (opponent === "Trigram") {
+        } else if (opponent === "default" || opponent === "Trigram") {
           return getSmallLanguageModelMove(state);
         } else if (opponent === "Careful") {
           if (state.dictionary.set.has(getLetters(state))) {
