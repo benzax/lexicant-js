@@ -184,7 +184,7 @@
       ) {
         if (opponent === "Perfect") {
           return getOptimalMove(state);
-        } else if (opponent === "default" || opponent === "Trigram") {
+        } else if (opponent === "Trigram") {
           return getSmallLanguageModelMove(state);
         } else if (opponent === "Careful") {
           if (state.dictionary.set.has(getLetters(state))) {
@@ -477,7 +477,7 @@
         getInitialState,
       );
 
-      const [opponent, setOpponent] = React.useState("default");
+      const [opponent, setOpponent] = React.useState("Trigram");
 
       // Load the dictionary
       React.useEffect(() => {
@@ -617,7 +617,7 @@
           value={opponent}
           onChange={(ev) => setOpponent(ev.target.value)}
         >
-          <option value="default" disabled>
+          <option value="description" disabled>
             Choose your opponent...
           </option>
           <option value="Random">Random Randi</option>
