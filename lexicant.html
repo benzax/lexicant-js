@@ -518,8 +518,16 @@
           />
         );
       } else {
-        return <ChallengePlay state={state} dispatch={dispatch} />;
+        return;
+        <div>
+          <ChallengePlay state={state} dispatch={dispatch} />
+        </div>;
       }
+    }
+
+    function RulesModal() {
+      return;
+      <div>lorem ipsum</div>;
     }
 
     function NormalPlay({ state, dispatch, opponent, setOpponent }) {
@@ -546,6 +554,7 @@
 
       return (
         <div>
+          <RulesModal />
           <h1>Lexicant game</h1>
           <div className="gameBoard">
             {getLetters(state).length > 0 && (
