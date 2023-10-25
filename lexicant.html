@@ -13,20 +13,20 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700"
     />
-    <link rel="stylesheet" href="/style.css" type="text/css" />
+    <link rel="stylesheet" href="./style.css" type="text/css" />
 
     <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
 
     <!-- These packages don't have a UMD available so we made our own. -->
-    <script src="/color.js"></script>
-    <script src="/immutability-helper.js"></script>
+    <script src="./color.js"></script>
+    <script src="./immutability-helper.js"></script>
 
-    <script src="/flipCoin.js"></script>
-    <script src="/LetterBitMapTrie.js"></script>
-    <script src="/BKTree.js"></script>
-    <script src="/State.js"></script>
+    <script src="./flipCoin.js"></script>
+    <script src="./LetterBitMapTrie.js"></script>
+    <script src="./BKTree.js"></script>
+    <script src="./State.js"></script>
   </head>
   <body>
     <div id="main">Loading code...</div>
@@ -34,7 +34,7 @@
 
   <script type="text/babel">
     async function loadDictionary() {
-      const response = await fetch("/dictionary.json");
+      const response = await fetch("./dictionary.json");
       const dictionaryWordList = await response.json();
       const set = new Set(dictionaryWordList.filter((word) => word.length > 3));
       const trie = new LetterBitMapTrie(set);
