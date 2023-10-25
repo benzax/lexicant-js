@@ -493,7 +493,7 @@
         }
 
         if (state.gameHistory.length > 0 && state.gameHistory.at(-1).isPlayer) {
-          setTimeout(() => dispatch(getComputerMove(state, opponent)), 1000);
+          setTimeout(() => dispatch(getComputerMove(state, opponent)), 100);
         }
       }, [state.gameHistory]);
 
