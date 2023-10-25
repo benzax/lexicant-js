@@ -509,9 +509,10 @@
         state.gameHistory.at(-1).type !== "challenge" ||
         state.gameHistory.at(-1).isPlayer
       ) {
+        const [display, setDisplay] = React.useState("none");
         return (
           <div>
-            <RulesModal display={display} />
+            <RulesModal display={display} setDisplay={setDisplay} />
             <NormalPlay
               state={state}
               dispatch={dispatch}
@@ -530,7 +531,7 @@
       }
     }
 
-    function RulesModal(display) {
+    function RulesModal({ display, setDisplay }) {
       return (
         <div className="modal" style="display: {display}">
           lorem ipsum
