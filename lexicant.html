@@ -603,10 +603,53 @@
             <PlayAgain state={state} dispatch={dispatch} />
           </div>
           <Hints margin="12px 0" state={state} />
+          <button
+            onClick={() => {
+              var modal = document.getElementById("instructionsModal");
+              modal.style.display = "block";
+              modal.style.position = "fixed";
+              modal.style.zIndex = 1;
+              modal.style.left = 0;
+              modal.style.top = 0;
+              modal.style.width = "100%";
+              modal.style.height = "100%";
+              modal.style.overflow = "auto";
+              modal.style.backgroundColor = "green";
+            }}
+          >
+            Instructions
+          </button>
           <div state={state}>Message: {getMessage(state)}</div>
           <PlayedWords state={state} margin="12px 0" />
           <ChallengeStatus state={state} margin="12px 0" />
           <SelectOpponent opponent={opponent} setOpponent={setOpponent} />
+          <br />
+          <div id="instructionsModal" className="modal">
+            <div className="modal-content">
+              <span
+                className="close"
+                onClick={() => {
+                  var modal = document.getElementById("instructionsModal");
+                  modal.style.display = "none";
+                }}
+              >
+                &times;
+              </span>
+              <p>
+                {" "}
+                Lexicant is a two player word game, in which both players take
+                turns adding a letter to the current sequence, while trying to
+                avoid completing a word.
+              </p>
+              <p>
+                {" "}
+                If your opponent completes a word, you can win by challenging
+                them. Only words of at least four letters count. You can also
+                win by challenging when there are no valid words which contain
+                the current sequence of letters.{" "}
+              </p>
+            </div>
+          </div>
           <Footer />
         </div>
       );
